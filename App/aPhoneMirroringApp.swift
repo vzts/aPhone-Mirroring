@@ -137,6 +137,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     AppInfo.migrateSettingsFromDroidMirroring()
     AppLanguage.captureLaunchState()
     SessionCoordinator.shared.monitor = monitor
+    // A phone on USB and Wi-Fi at once is listed by the connection it was mirrored over.
+    monitor.isPreferredSerial = { SessionCoordinator.shared.isTrusted($0) }
     // Keep a Dock icon — without it, users have no visible signal that the
     // app is running until they spot the menu bar item. The Dock icon also
     // gives us a proper "click to reopen" target.

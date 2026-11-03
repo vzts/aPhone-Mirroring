@@ -78,6 +78,7 @@ final class SessionCoordinator: ObservableObject {
     set { UserDefaults.standard.set(Array(newValue), forKey: trustedKey) }
   }
   func trustDevice(_ s: String) { var x = trusted; x.insert(s); trusted = x }
+  func isTrusted(_ s: String) -> Bool { trusted.contains(s) }
   var hasActiveSession: Bool { !mirrorWindows.isEmpty || !fusionWindows.isEmpty }
   /// Anything quitting must tear down first (servers, desktop-mode settings).
   var needsShutdown: Bool { hasActiveSession || !freeformTokens.isEmpty }
@@ -221,12 +222,18 @@ final class SessionCoordinator: ObservableObject {
     wc.close()
   }
 
+  /// Serials whose launch is in flight: the window is only registered after
+  /// the display lookup, so a second caller in that gap would open another.
+  private var startingMirrors: Set<String> = []
+
   func startMirror(for device: Device) async {
     trustDevice(device.id)
     if let existing = mirrorWindows[device.id] {
       existing.window?.makeKeyAndOrderFront(nil)
       return
     }
+    guard startingMirrors.insert(device.id).inserted else { return }
+    defer { startingMirrors.remove(device.id) }
     let pick = try? await adb.pickActiveDisplay(serial: device.id)
     let displayId = pick?.id ?? 0
     activePanel[device.id] = (

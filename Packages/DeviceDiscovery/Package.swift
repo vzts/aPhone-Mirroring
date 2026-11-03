@@ -16,5 +16,9 @@ let package = Package(
       name: "DeviceDiscovery",
       dependencies: ["SharedModels", "ADBKit"]
     ),
+    .testTarget(
+      name: "DeviceDiscoveryTests",
+      dependencies: ["DeviceDiscovery", "SharedModels"]
+    ),
   ]
 )

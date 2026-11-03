@@ -14,7 +14,12 @@ public final class DeviceMonitor: ObservableObject {
   /// Per-serial cache of SDK/manufacturer/model gathered via `getprop`. Skip
   /// re-querying every time host:track-devices pings us; props are static for
   /// the device's session.
-  private var propsCache: [String: (sdk: Int, manufacturer: String, model: String, name: String)] = [:]
+  private var propsCache: [String: (sdk: Int, manufacturer: String, model: String, name: String, phoneID: String)] = [:]
+  /// Phone (android_id) → the adb serial `devices` lists it under.
+  private var publishedSerials: [String: String] = [:]
+  /// Serials to keep when a phone is connected more than one way; the app
+  /// answers with the phones it has mirrored before.
+  public var isPreferredSerial: (String) -> Bool = { _ in false }
 
   public init(adb: ADBClient = ADBClient(), adbBinary: URL? = nil) {
     self.adb = adb
@@ -74,11 +79,26 @@ public final class DeviceMonitor: ObservableObject {
       let parsed = payload.split(separator: "\n").compactMap(ADBClient.parseDeviceLine)
       let enriched = await enrich(parsed)
       await MainActor.run {
-        self.devices = enriched
+        let collapsed = PhoneConnections.collapse(
+          enriched, phoneKey: self.phoneKey, current: self.publishedSerials, preferred: self.isPreferredSerial)
+        self.publishedSerials = collapsed.chosen
+        self.devices = collapsed.devices
         self.lastError = nil
       }
     }
     await conn.close()
+  }
+
+  /// The online serial `devices` lists for the phone behind `serial`, which
+  /// may be another of its connections; nil until that phone is online.
+  public func publishedSerial(for serial: String) -> String? {
+    if devices.contains(where: { $0.id == serial && $0.state == .online }) { return serial }
+    return phoneKey(serial).flatMap { publishedSerials[$0] }
+  }
+
+  private func phoneKey(_ serial: String) -> String? {
+    guard let key = propsCache[serial]?.phoneID, !key.isEmpty else { return nil }
+    return key
   }
 
   /// Kill any scrcpy server processes left over from a previous crash / hard
@@ -115,16 +135,20 @@ public final class DeviceMonitor: ObservableObject {
         continue
       }
       let props = (try? await adb.shell(
-        "getprop ro.build.version.sdk; getprop ro.product.manufacturer; getprop ro.product.model; settings get global device_name",
+        "getprop ro.build.version.sdk; getprop ro.product.manufacturer; getprop ro.product.model; settings get global device_name; settings get secure android_id",
         serial: device.id
       )) ?? ""
-      let lines = props.split(separator: "\n").map {
+      // Keep empty lines: an unset prop must not shift the ones after it.
+      let lines = props.split(separator: "\n", omittingEmptySubsequences: false).map {
         $0.trimmingCharacters(in: .whitespacesAndNewlines)
       }
       let sdk = lines.first.flatMap { Int($0) } ?? 0
       let manufacturer = lines.count > 1 ? lines[1] : ""
       let model = lines.count > 2 ? lines[2] : ""
       let name = lines.count > 3 && lines[3] != "null" ? lines[3] : ""
+      // Unique per phone, unlike ro.serialno (shared by emulators of one image
+      // and by phones that report 0123456789ABCDEF).
+      let phoneID = lines.count > 4 && lines[4] != "null" ? lines[4] : ""
       var d = device
       d.androidSDK = sdk
       d.manufacturer = manufacturer
@@ -132,7 +156,7 @@ public final class DeviceMonitor: ObservableObject {
       d.name = name
       if sdk > 0 {
         await MainActor.run {
-          self.propsCache[device.id] = (sdk: sdk, manufacturer: manufacturer, model: model, name: name)
+          self.propsCache[device.id] = (sdk: sdk, manufacturer: manufacturer, model: model, name: name, phoneID: phoneID)
         }
       }
       result.append(d)
