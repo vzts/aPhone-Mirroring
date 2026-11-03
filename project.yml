@@ -67,6 +67,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: "Droid Mirroring"
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.productivity
         NSHighResolutionCapable: true
         NSLocalNetworkUsageDescription: "Droid Mirroring uses the local network to discover Android devices in Wireless ADB mode and to pair with them over a TLS link."
