@@ -236,6 +236,9 @@ final class MirrorWindowController: NSWindowController {
       if autoScreenOffEnabled || isScreenOff, let writer = await session.control {
         try? await writer.send(.setScreenPowerMode(2))  // NORMAL — restore full power
       }
+      if let serial = deviceSerial {
+        await SessionCoordinator.shared.restoreOnScreenKeyboard(serial: serial, endedMirror: self)
+      }
       // Restore device media volume if we muted it for "mac" audio mode.
       if let serial = deviceSerial, let vol = savedDeviceVolume {
         try? await adb.shell("media volume --stream 3 --set \(vol)", serial: serial)

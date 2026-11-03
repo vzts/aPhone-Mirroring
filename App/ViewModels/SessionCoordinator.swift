@@ -28,6 +28,9 @@ final class SessionCoordinator: ObservableObject {
   /// window in parallel so scrcpy-server's `cleanup=true` hook fires before we
   /// die, releasing any virtual displays on the device.
   func shutdownEverything() async {
+    for serial in mirrorWindows.keys {
+      await restoreOnScreenKeyboard(serial: serial)
+    }
     await withTaskGroup(of: Void.self) { group in
       for (_, controller) in mirrorWindows {
         group.addTask { await controller.session.stop() }
@@ -514,6 +517,7 @@ final class SessionCoordinator: ObservableObject {
     // mirror down, so it's held awake (screen timeout 30 min) while mirroring.
     // Not a setting: turning it off would only ever break the mirror.
     await prepareScreenOffTimeout(serial: device.id)
+    await prepareOnScreenKeyboard(serial: device.id)
 
     let options = ScrcpyOptions(
       videoBitRate: bitrateMbps * 1_000_000,
@@ -571,6 +575,38 @@ final class SessionCoordinator: ObservableObject {
       }
     }
     throw lastError ?? DroidMirroringError.scrcpyProtocol("launch failed")
+  }
+
+  // MARK: on-screen keyboard
+
+  /// Mac typing goes through a UHID keyboard, and Android hides the on-screen
+  /// keyboard whenever a hardware one is attached — so picking up the phone
+  /// mid-mirror left no way to type on it. Keep the on-screen keyboard
+  /// available while mirroring; the phone's own choice is saved per device and
+  /// put back when the mirror ends (or at the end of the next one, if this
+  /// session never got to).
+  private static let showIMEKey = "show_ime_with_hard_keyboard"
+
+  private func prepareOnScreenKeyboard(serial: String) async {
+    let saved = "mirror.originalShowIME.\(serial)"
+    let raw = try? await adb.shell("settings get secure \(Self.showIMEKey)", serial: serial)
+    guard let current = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !current.isEmpty else { return }
+    guard current != "1" else { return }
+    UserDefaults.standard.set(current, forKey: saved)
+    _ = try? await adb.shell("settings put secure \(Self.showIMEKey) 1", serial: serial)
+  }
+
+  /// `endedMirror` is the window that just closed. If a newer one already took
+  /// the phone (the display-0 retry), that session still needs the keyboard.
+  func restoreOnScreenKeyboard(serial: String, endedMirror: MirrorWindowController? = nil) async {
+    if let ended = endedMirror, let current = mirrorWindows[serial], current !== ended { return }
+    let saved = "mirror.originalShowIME.\(serial)"
+    guard let original = UserDefaults.standard.string(forKey: saved) else { return }
+    let command = original == "null"
+      ? "settings delete secure \(Self.showIMEKey)"
+      : "settings put secure \(Self.showIMEKey) \(original)"
+    guard (try? await adb.shell(command, serial: serial)) != nil else { return }  // unreachable: retry next time
+    UserDefaults.standard.removeObject(forKey: saved)
   }
 
   /// Settings › Codec changed: forget fallbacks and restart with the new one.
