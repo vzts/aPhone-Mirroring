@@ -22,6 +22,9 @@ public struct ScrcpyOptions: Sendable {
   public var maxSize: Int             // 0 = native
   public var displayId: Int           // 0 = default; foldables: pick the active panel
   public var newDisplay: String?      // "1920x1080/180" for Fusion freeform
+  /// Device `screen_off_timeout` (ms) while the server runs; -1 = leave alone.
+  /// scrcpy's CleanUp process restores the original value when the server dies.
+  public var screenOffTimeoutMs: Int
 
   public init(
     videoBitRate: Int = 4_000_000,
@@ -32,7 +35,8 @@ public struct ScrcpyOptions: Sendable {
     controlEnabled: Bool = true,
     maxSize: Int = 0,
     displayId: Int = 0,
-    newDisplay: String? = nil
+    newDisplay: String? = nil,
+    screenOffTimeoutMs: Int = -1
   ) {
     self.videoBitRate = videoBitRate
     self.maxFps = maxFps
@@ -43,6 +47,7 @@ public struct ScrcpyOptions: Sendable {
     self.maxSize = maxSize
     self.displayId = displayId
     self.newDisplay = newDisplay
+    self.screenOffTimeoutMs = screenOffTimeoutMs
   }
 
   func serverArgs(scid: String) -> [String] {
@@ -62,6 +67,7 @@ public struct ScrcpyOptions: Sendable {
     ]
     if maxSize > 0 { args.append("max_size=\(maxSize)") }
     if let nd = newDisplay { args.append("new_display=\(nd)") }
+    if screenOffTimeoutMs >= 0 { args.append("screen_off_timeout=\(screenOffTimeoutMs)") }
     return args
   }
 }

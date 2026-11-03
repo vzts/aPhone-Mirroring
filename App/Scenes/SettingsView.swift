@@ -40,6 +40,7 @@ private struct MirrorSettings: View {
   @AppStorage("mirror.bitrate") private var bitrate = 4
   @AppStorage("mirror.maxFps") private var maxFps = 60
   @AppStorage("mirror.autoScreenOff") private var autoScreenOff = true
+  @AppStorage("mirror.keepAwake") private var keepAwake = true
   @AppStorage("mirror.clipboardSync") private var clipboardSync = true
   @AppStorage("mirror.audioOutput") private var audioOutput = "mac"  // "mac" | "phone" | "none"
 
@@ -74,6 +75,10 @@ private struct MirrorSettings: View {
       Section("Privacy") {
         Toggle("Turn off device screen on mirror start", isOn: $autoScreenOff)
         Text("Keeps the phone display dark while you work on the Mac. The toolbar 🌙 button toggles it manually any time.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        Toggle("Keep phone awake while mirroring", isOn: $keepAwake)
+        Text("Stops the phone from sleeping (up to 30 minutes idle) so the wireless connection doesn't drop. The phone's own screen timeout is restored when mirroring ends.")
           .font(.caption)
           .foregroundStyle(.secondary)
       }

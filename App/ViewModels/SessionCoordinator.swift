@@ -427,6 +427,12 @@ final class SessionCoordinator: ObservableObject {
     let bitrateMbps = (defaults.object(forKey: "mirror.bitrate") as? Int) ?? 4
     let maxFps = (defaults.object(forKey: "mirror.maxFps") as? Int) ?? 60
     let audioOutput = defaults.string(forKey: "mirror.audioOutput") ?? "mac"
+    // A sleeping phone drops its wireless-debugging link, which tears the
+    // mirror down. Hold the screen-off timeout at 30 min while mirroring.
+    let keepAwake = defaults.object(forKey: "mirror.keepAwake") as? Bool ?? true
+    if keepAwake {
+      await prepareScreenOffTimeout(serial: device.id)
+    }
 
     let options = ScrcpyOptions(
       videoBitRate: bitrateMbps * 1_000_000,
@@ -435,10 +441,31 @@ final class SessionCoordinator: ObservableObject {
       audioCodec: "opus",
       audioEnabled: audioEnabled && audioOutput == "mac",
       controlEnabled: true,
-      displayId: displayId
+      displayId: displayId,
+      screenOffTimeoutMs: keepAwake ? Self.keepAwakeScreenOffTimeoutMs : -1
     )
     try await controller.session.start(launcher: launcher, options: options)
     await controller.bindControl()
+  }
+
+  private static let keepAwakeScreenOffTimeoutMs = 30 * 60 * 1000
+
+  /// scrcpy-server records the current `screen_off_timeout` and its CleanUp
+  /// process restores it when the server dies. On a relaunch the previous
+  /// server's value can still be in place (its CleanUp hasn't run yet, or was
+  /// lost to a reboot), so the new server would record our own value and never
+  /// restore. Remember the phone's real value and put it back before launching.
+  private func prepareScreenOffTimeout(serial: String) async {
+    let key = "mirror.originalScreenOffTimeout.\(serial)"
+    let raw = try? await adb.shell("settings get system screen_off_timeout", serial: serial)
+    guard let current = raw.flatMap({ Int($0.trimmingCharacters(in: .whitespacesAndNewlines)) }) else { return }
+    if current != Self.keepAwakeScreenOffTimeoutMs {
+      UserDefaults.standard.set(current, forKey: key)
+      return
+    }
+    guard let original = UserDefaults.standard.object(forKey: key) as? Int else { return }
+    log.notice("restoring leftover screen_off_timeout to \(original) before launch")
+    _ = try? await adb.shell("settings put system screen_off_timeout \(original)", serial: serial)
   }
 
   /// Tear down and re-launch the scrcpy session for `serial` without closing
