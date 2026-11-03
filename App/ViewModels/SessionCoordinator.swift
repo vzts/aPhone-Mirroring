@@ -76,6 +76,8 @@ final class SessionCoordinator: ObservableObject {
   }
   func trustDevice(_ s: String) { var x = trusted; x.insert(s); trusted = x }
   var hasActiveSession: Bool { !mirrorWindows.isEmpty || !fusionWindows.isEmpty }
+  /// Anything quitting must tear down first (servers, desktop-mode settings).
+  var needsShutdown: Bool { hasActiveSession || !freeformTokens.isEmpty }
 
   /// Called from the App on every DeviceMonitor publish. Opens Mirror for the
   /// first online device we haven't already auto-mirrored this session,

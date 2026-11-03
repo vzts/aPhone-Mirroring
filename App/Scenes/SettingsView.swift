@@ -84,7 +84,6 @@ private struct GeneralSettings: View {
 /// Follows the system by default; a choice here overrides it for this app only.
 private struct LanguageSection: View {
   @State private var selection = AppLanguage.override ?? ""
-  private let launched = AppLanguage.override ?? ""
 
   var body: some View {
     Section {
@@ -95,7 +94,7 @@ private struct LanguageSection: View {
         }
       }
       .onChange(of: selection) { _, code in AppLanguage.override = code.isEmpty ? nil : code }
-      if selection != launched {
+      if selection != (AppLanguage.atLaunch ?? "") {
         LabeledContent {
           Button("Restart Now") { AppLanguage.relaunch() }
         } label: {

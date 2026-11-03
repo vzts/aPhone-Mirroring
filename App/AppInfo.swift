@@ -46,6 +46,13 @@ enum AppLanguage {
     .init(code: "it", name: "Italiano"),
   ]
 
+  /// The override this process launched with — what the UI is showing now.
+  /// Captured once at launch; `override` itself changes as soon as the user
+  /// picks another language.
+  private(set) static var atLaunch: String?
+
+  static func captureLaunchState() { atLaunch = override }
+
   /// Per-app `AppleLanguages`, read from this app's own domain so the system
   /// list never shows up as an "override".
   static var override: String? {
@@ -60,11 +67,19 @@ enum AppLanguage {
   }
 
   /// Quit (letting sessions clean up) and open again in the new language.
+  /// The helper waits for this process to be gone first; opening while it is
+  /// still quitting would just re-activate it.
   static func relaunch() {
     let task = Process()
     task.executableURL = URL(fileURLWithPath: "/bin/sh")
-    task.arguments = ["-c", "sleep 1.5; /usr/bin/open \"$0\"", Bundle.main.bundlePath]
+    task.arguments = [
+      "-c", "while kill -0 \"$1\" 2>/dev/null; do sleep 0.2; done; /usr/bin/open \"$0\"",
+      Bundle.main.bundlePath, String(ProcessInfo.processInfo.processIdentifier),
+    ]
     try? task.run()
-    NSApp.terminate(nil)
+    // Via a run-loop timer, not inline: terminate's NSTerminateLater cleanup
+    // runs on the main queue, which is stuck if we're already inside a
+    // main-queue block (a Task or async callback) — the app would never quit.
+    NSApp.perform(#selector(NSApplication.terminate(_:)), with: nil, afterDelay: 0)
   }
 }

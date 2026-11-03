@@ -108,6 +108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     AppInfo.migrateSettingsFromDroidMirroring()
+    AppLanguage.captureLaunchState()
     SessionCoordinator.shared.monitor = monitor
     // Keep a Dock icon — without it, users have no visible signal that the
     // app is running until they spot the menu bar item. The Dock icon also
@@ -138,6 +139,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+    // Nothing to restore on a phone: quit right away instead of waiting.
+    guard SessionCoordinator.shared.needsShutdown else { return .terminateNow }
     Task { @MainActor in
       await SessionCoordinator.shared.shutdownEverything()
       NSApp.reply(toApplicationShouldTerminate: true)
@@ -184,6 +187,13 @@ enum DebugScreens {
     if requested.contains("connect") {
       // After auto-mirror has had its chance, so the window isn't handed off.
       DispatchQueue.main.asyncAfter(deadline: .now() + 6) { SessionCoordinator.shared.showConnectWindow() }
+    }
+    if let code = requested.first(where: { $0.hasPrefix("relaunch-") })?.dropFirst("relaunch-".count) {
+      // Same path as Settings › Language › Restart Now.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        AppLanguage.override = String(code)
+        AppLanguage.relaunch()
+      }
     }
     if requested.contains("files") {
       DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
