@@ -157,3 +157,5 @@
 "System Default" = "Padrão do sistema";
 "Restart Now" = "Reiniciar Agora";
 "Restart %@ to use the new language." = "Reinicie o %@ para usar o novo idioma.";
+"Show Navigation Buttons" = "Mostrar Botões de Navegação";
+"Hide Navigation Buttons" = "Ocultar Botões de Navegação";

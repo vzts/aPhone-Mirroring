@@ -157,3 +157,5 @@
 "System Default" = "システムのデフォルト";
 "Restart Now" = "今すぐ再起動";
 "Restart %@ to use the new language." = "新しい言語を使うには %@を再起動してください。";
+"Show Navigation Buttons" = "ナビゲーションボタンを表示";
+"Hide Navigation Buttons" = "ナビゲーションボタンを非表示";

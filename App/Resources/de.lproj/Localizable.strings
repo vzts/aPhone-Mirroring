@@ -157,3 +157,5 @@
 "System Default" = "Systemstandard";
 "Restart Now" = "Jetzt neu starten";
 "Restart %@ to use the new language." = "Starte %@ neu, um die neue Sprache zu verwenden.";
+"Show Navigation Buttons" = "Navigationstasten einblenden";
+"Hide Navigation Buttons" = "Navigationstasten ausblenden";

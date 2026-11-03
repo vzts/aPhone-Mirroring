@@ -157,3 +157,5 @@
 "System Default" = "시스템 기본값";
 "Restart Now" = "지금 재시작";
 "Restart %@ to use the new language." = "새 언어를 적용하려면 %@을 재시작하세요.";
+"Show Navigation Buttons" = "내비게이션 버튼 보기";
+"Hide Navigation Buttons" = "내비게이션 버튼 가리기";

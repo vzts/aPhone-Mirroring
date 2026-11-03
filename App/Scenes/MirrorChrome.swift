@@ -14,21 +14,25 @@ import AppKit
 @MainActor
 final class MirrorTitlebarControls: NSView {
   private(set) var moreButton: NSButton!
+  private var navPill: NSView!
   private var navStack: NSStackView!
   private var backButton: NSButton!
   private var homeButton: NSButton!
   private var recentsButton: NSButton!
+  private var recordButton: NSButton!
   private var screenButton: NSButton!
   private var actions: [Int: () -> Void] = [:]
   private let onMore: (NSView) -> Void
 
-  private enum Tag: Int { case back, home, recents, screenshot, screen, more }
+  private enum Tag: Int { case back, home, recents, screenshot, record, rotate, screen, more }
 
   init(
     onBack: @escaping () -> Void,
     onHome: @escaping () -> Void,
     onRecents: @escaping () -> Void,
     onScreenshot: @escaping () -> Void,
+    onRecord: @escaping () -> Void,
+    onRotate: @escaping () -> Void,
     onTogglePhoneScreen: @escaping () -> Void,
     onMore: @escaping (NSView) -> Void
   ) {
@@ -36,20 +40,24 @@ final class MirrorTitlebarControls: NSView {
     super.init(frame: .zero)
     actions = [
       Tag.back.rawValue: onBack, Tag.home.rawValue: onHome, Tag.recents.rawValue: onRecents,
-      Tag.screenshot.rawValue: onScreenshot, Tag.screen.rawValue: onTogglePhoneScreen,
+      Tag.screenshot.rawValue: onScreenshot, Tag.record.rawValue: onRecord,
+      Tag.rotate.rawValue: onRotate, Tag.screen.rawValue: onTogglePhoneScreen,
     ]
     appearance = NSAppearance(named: .darkAqua)
 
-    backButton = makeButton(Self.navIcon(.back), String(localized: "Back"), tag: .back)
-    homeButton = makeButton(Self.navIcon(.home), String(localized: "Home"), tag: .home)
-    recentsButton = makeButton(Self.navIcon(.recents), String(localized: "Recents"), tag: .recents)
-    let screenshot = makeButton(Self.symbol("camera"), String(localized: "Take Screenshot"), tag: .screenshot)
-    screenButton = makeButton(Self.screenIcon(lit: true), String(localized: "Turn Off Phone Screen"), tag: .screen)
-    moreButton = makeButton(Self.symbol("ellipsis"), String(localized: "More"), tag: .more)
+    backButton = makeButton(Self.navIcon(.back), String(localized: "Back"), tag: .back, shortcut: .back)
+    homeButton = makeButton(Self.navIcon(.home), String(localized: "Home"), tag: .home, shortcut: .home)
+    recentsButton = makeButton(Self.navIcon(.recents), String(localized: "Recents"), tag: .recents, shortcut: .recents)
+    let screenshot = makeButton(Self.symbol("camera"), String(localized: "Take Screenshot"), tag: .screenshot, shortcut: .screenshot)
+    recordButton = makeButton(Self.symbol("record.circle"), String(localized: "Start Recording"), tag: .record, shortcut: .record)
+    let rotate = makeButton(Self.symbol("rotate.right"), String(localized: "Rotate Screen"), tag: .rotate, shortcut: .rotate)
+    screenButton = makeButton(Self.screenIcon(lit: true), String(localized: "Turn Off Phone Screen"), tag: .screen, shortcut: .phoneScreen)
+    moreButton = makeButton(Self.symbol("ellipsis"), String(localized: "More"), tag: .more, shortcut: .more)
 
     let (navPill, navStack) = Self.makePill([backButton, homeButton, recentsButton])
+    self.navPill = navPill
     self.navStack = navStack
-    let (toolPill, _) = Self.makePill([screenshot, screenButton, moreButton])
+    let (toolPill, _) = Self.makePill([screenshot, recordButton, rotate, screenButton, moreButton])
 
     let row = NSStackView(views: [navPill, toolPill])
     row.orientation = .horizontal
@@ -66,12 +74,25 @@ final class MirrorTitlebarControls: NSView {
 
   required init?(coder: NSCoder) { fatalError() }
 
+  /// Back / Home / Recents capsule; hidden by default (More › Show Navigation Buttons).
+  func setNavigationVisible(_ visible: Bool) {
+    navPill.isHidden = !visible
+  }
+
+  func setRecording(_ recording: Bool) {
+    recordButton.image = Self.symbol(recording ? "stop.circle.fill" : "record.circle")
+    recordButton.contentTintColor = recording ? .systemRed : .labelColor
+    let label = recording ? String(localized: "Stop Recording") : String(localized: "Start Recording")
+    recordButton.toolTip = MirrorShortcut.record.tooltip(label)
+    recordButton.setAccessibilityLabel(label)
+  }
+
   /// Reflect Settings › Turn off phone screen while mirroring: a filled sun
   /// while the phone screen is lit, an outline sun while it's dark.
   func setPhoneScreenOff(_ off: Bool) {
     screenButton.image = Self.screenIcon(lit: !off)
     let label = off ? String(localized: "Turn On Phone Screen") : String(localized: "Turn Off Phone Screen")
-    screenButton.toolTip = label
+    screenButton.toolTip = MirrorShortcut.phoneScreen.tooltip(label)
     screenButton.setAccessibilityLabel(label)
   }
 
@@ -151,14 +172,14 @@ final class MirrorTitlebarControls: NSView {
     return image
   }
 
-  private func makeButton(_ image: NSImage, _ label: String, tag: Tag) -> NSButton {
+  private func makeButton(_ image: NSImage, _ label: String, tag: Tag, shortcut: MirrorShortcut) -> NSButton {
     let button = NSButton(image: image, target: self, action: #selector(pressed(_:)))
     button.tag = tag.rawValue
     button.isBordered = false
     button.bezelStyle = .regularSquare
     button.imagePosition = .imageOnly
     button.contentTintColor = .labelColor
-    button.toolTip = label
+    button.toolTip = shortcut.tooltip(label)
     button.setAccessibilityLabel(label)
     button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
@@ -171,6 +192,47 @@ final class MirrorTitlebarControls: NSView {
   @objc private func pressed(_ sender: NSButton) {
     if sender.tag == Tag.more.rawValue { onMore(sender) } else { actions[sender.tag]?() }
   }
+}
+
+// MARK: - Shortcuts
+
+/// One table for the Device menu, the More menu, and button tooltips, so a
+/// shortcut can't drift between them.
+enum MirrorShortcut {
+  case back, home, recents, screenshot, record, rotate, phoneScreen, more, refreshDisplay, settings
+
+  var key: String {
+    switch self {
+    case .back: "["
+    case .home: "1"
+    case .recents: "2"
+    case .screenshot: "s"
+    case .record, .rotate, .refreshDisplay: "r"
+    case .phoneScreen: "d"
+    case .more: "."
+    case .settings: ","
+    }
+  }
+
+  var modifiers: NSEvent.ModifierFlags {
+    switch self {
+    case .record: [.command, .shift]
+    case .refreshDisplay: [.command, .option]
+    default: [.command]
+    }
+  }
+
+  /// "⇧⌘R", in the order macOS menus print modifiers.
+  var display: String {
+    var out = ""
+    if modifiers.contains(.control) { out += "⌃" }
+    if modifiers.contains(.option) { out += "⌥" }
+    if modifiers.contains(.shift) { out += "⇧" }
+    if modifiers.contains(.command) { out += "⌘" }
+    return out + key.uppercased()
+  }
+
+  func tooltip(_ label: String) -> String { "\(label) (\(display))" }
 }
 
 // MARK: - Closure-backed menu item

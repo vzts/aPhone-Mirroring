@@ -149,6 +149,12 @@ final class SessionCoordinator: ObservableObject {
     phoneScreenOffChanged(on)
   }
 
+  /// More menu and View menu: one setting for every mirror window.
+  func setNavigationButtonsVisible(_ visible: Bool) {
+    UserDefaults.standard.set(visible, forKey: "mirror.showNavigationButtons")
+    mirrorWindows.values.forEach { $0.applyNavigationButtonsVisible(visible) }
+  }
+
   func phoneScreenOffChanged(_ on: Bool) {
     mirrorWindows.values.forEach { $0.applyPhoneScreenOff(on) }
   }

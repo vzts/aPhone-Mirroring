@@ -157,3 +157,5 @@
 "System Default" = "Как в системе";
 "Restart Now" = "Перезапустить";
 "Restart %@ to use the new language." = "Перезапустите %@, чтобы применить новый язык.";
+"Show Navigation Buttons" = "Показать кнопки навигации";
+"Hide Navigation Buttons" = "Скрыть кнопки навигации";

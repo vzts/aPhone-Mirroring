@@ -30,6 +30,9 @@ struct APhoneMirroringApp: App {
           NSWorkspace.shared.open(AppInfo.repository.appendingPathComponent("releases/latest"))
         }
       }
+      CommandGroup(before: .toolbar) {
+        ViewCommands()
+      }
       CommandMenu("Device") {
         DeviceCommands()
       }
@@ -63,36 +66,60 @@ enum SettingsLauncher {
   }
 }
 
-/// Device menu — acts on the frontmost Mirror window. Shortcuts follow
-/// iPhone Mirroring where an equivalent exists (⌘1 Home, ⌘2 App Switcher).
+/// Device menu — acts on the frontmost Mirror window. Shortcuts come from
+/// `MirrorShortcut`, shared with the More menu and button tooltips.
 private struct DeviceCommands: View {
   @AppStorage("mirror.autoScreenOff") private var phoneScreenOff = true
 
   var body: some View {
     Button("Back") { MirrorWindowController.key?.sendBack() }
-      .keyboardShortcut("[", modifiers: .command)
+      .shortcut(.back)
     Button("Home") { MirrorWindowController.key?.sendHome() }
-      .keyboardShortcut("1", modifiers: .command)
+      .shortcut(.home)
     Button("Recents") { MirrorWindowController.key?.sendRecents() }
-      .keyboardShortcut("2", modifiers: .command)
+      .shortcut(.recents)
     Divider()
     Button("Take Screenshot") { MirrorWindowController.key?.takeScreenshot() }
-      .keyboardShortcut("s", modifiers: .command)
+      .shortcut(.screenshot)
     Button("Start or Stop Recording") { MirrorWindowController.key?.toggleRecord() }
-      .keyboardShortcut("r", modifiers: [.command, .shift])
+      .shortcut(.record)
     Button("Rotate Screen") { MirrorWindowController.key?.rotateDevice() }
+      .shortcut(.rotate)
     Toggle("Turn off phone screen while mirroring", isOn: Binding(
       get: { phoneScreenOff },
       set: { SessionCoordinator.shared.setPhoneScreenOff($0) }
     ))
+    .shortcut(.phoneScreen)
     Divider()
     Button("Refresh Active Display") {
       guard let controller = MirrorWindowController.key, let serial = controller.deviceSerial else { return }
       Task { await SessionCoordinator.shared.refreshActiveDisplay(for: Device(id: serial, state: .online)) }
     }
-    .keyboardShortcut("r", modifiers: .command)
+    .shortcut(.refreshDisplay)
     Divider()
     Button("Connect a Phone…") { SessionCoordinator.shared.showConnectWindow() }
+  }
+}
+
+/// View menu: the mirror window's navigation buttons.
+private struct ViewCommands: View {
+  @AppStorage("mirror.showNavigationButtons") private var showsNavigation = false
+
+  var body: some View {
+    Button(showsNavigation ? LocalizedStringKey("Hide Navigation Buttons") : LocalizedStringKey("Show Navigation Buttons")) {
+      SessionCoordinator.shared.setNavigationButtonsVisible(!showsNavigation)
+    }
+  }
+}
+
+private extension View {
+  func shortcut(_ s: MirrorShortcut) -> some View {
+    var modifiers: EventModifiers = []
+    if s.modifiers.contains(.command) { modifiers.insert(.command) }
+    if s.modifiers.contains(.shift) { modifiers.insert(.shift) }
+    if s.modifiers.contains(.option) { modifiers.insert(.option) }
+    if s.modifiers.contains(.control) { modifiers.insert(.control) }
+    return keyboardShortcut(KeyEquivalent(Character(s.key)), modifiers: modifiers)
   }
 }
 

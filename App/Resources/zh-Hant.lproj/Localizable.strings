@@ -157,3 +157,5 @@
 "System Default" = "系統預設值";
 "Restart Now" = "立即重新啟動";
 "Restart %@ to use the new language." = "重新啟動 %@ 以使用新語言。";
+"Show Navigation Buttons" = "顯示導覽按鈕";
+"Hide Navigation Buttons" = "隱藏導覽按鈕";

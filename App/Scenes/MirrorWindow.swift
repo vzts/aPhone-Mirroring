@@ -157,6 +157,8 @@ final class MirrorWindowController: NSWindowController {
       onHome: { [weak self] in self?.sendHome() },
       onRecents: { [weak self] in self?.sendRecents() },
       onScreenshot: { [weak self] in self?.takeScreenshot() },
+      onRecord: { [weak self] in self?.toggleRecord() },
+      onRotate: { [weak self] in self?.rotateDevice() },
       onTogglePhoneScreen: { [weak self] in
         // Same single setting as Settings › Mirroring, so both always agree.
         guard let self else { return }
@@ -165,6 +167,7 @@ final class MirrorWindowController: NSWindowController {
       onMore: { [weak self] anchor in self?.showMoreMenu(anchor: anchor) }
     )
     self.titlebarControls = controls
+    controls.setNavigationVisible(Self.showsNavigationButtons)
     container.addSubview(controls)
     controls.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
@@ -363,6 +366,7 @@ final class MirrorWindowController: NSWindowController {
       recorder.stop { [weak self] url in
         Task { @MainActor in
           self?.isRecording = false
+          self?.titlebarControls?.setRecording(false)
           if let url { NSWorkspace.shared.activateFileViewerSelecting([url]) }
         }
       }
@@ -375,6 +379,7 @@ final class MirrorWindowController: NSWindowController {
       do {
         try recorder.start(outputURL: url, size: currentDeviceSize)
         isRecording = true
+        titlebarControls?.setRecording(true)
           } catch {
         showAlert(error)
       }
@@ -589,12 +594,13 @@ final class MirrorWindowController: NSWindowController {
     let menu = NSMenu()
     menu.autoenablesItems = false
 
+    let showsNav = Self.showsNavigationButtons
     menu.addItem(ActionMenuItem(
-      isRecording ? String(localized: "Stop Recording") : String(localized: "Start Recording"),
-      symbol: isRecording ? "stop.circle" : "record.circle", key: "r", modifiers: [.command, .shift]
-    ) { [weak self] in self?.toggleRecord() })
-    menu.addItem(ActionMenuItem(String(localized: "Rotate Screen"), symbol: "rotate.right") { [weak self] in
-      self?.rotateDevice()
+      showsNav ? String(localized: "Hide Navigation Buttons") : String(localized: "Show Navigation Buttons"),
+      symbol: "chevron.left.chevron.right"
+    ) { SessionCoordinator.shared.setNavigationButtonsVisible(!showsNav) })
+    menu.addItem(ActionMenuItem(String(localized: "Keep Window on Top"), symbol: "pin", state: isPinned ? .on : .off) { [weak self] in
+      self?.togglePin()
     })
     menu.addItem(.separator())
 
@@ -606,13 +612,44 @@ final class MirrorWindowController: NSWindowController {
     })
     menu.addItem(.separator())
 
-    menu.addItem(ActionMenuItem(String(localized: "Keep Window on Top"), symbol: "pin", state: isPinned ? .on : .off) { [weak self] in
-      self?.togglePin()
-    })
-    menu.addItem(ActionMenuItem(String(localized: "Mirroring Settings…"), symbol: "gearshape", key: ",") {
+    let settings = MirrorShortcut.settings
+    menu.addItem(ActionMenuItem(String(localized: "Mirroring Settings…"), symbol: "gearshape",
+                                key: settings.key, modifiers: settings.modifiers) {
       SettingsLauncher.open(tab: "mirror")
     })
     return menu
+  }
+
+  // MARK: navigation buttons
+
+  /// Off by default — Back/Home/Recents are also on ⌘[ / ⌘1 / ⌘2.
+  static var showsNavigationButtons: Bool {
+    UserDefaults.standard.bool(forKey: "mirror.showNavigationButtons")
+  }
+
+  func applyNavigationButtonsVisible(_ visible: Bool) {
+    titlebarControls?.setNavigationVisible(visible)
+    guard let window else { return }
+    let aspect = window.contentAspectRatio
+    let minimum = minimumContentSize(aspect: aspect)
+    window.contentMinSize = minimum
+    // Grow if the wider title bar would now run into the traffic lights.
+    let content = window.contentRect(forFrameRect: window.frame)
+    if content.width < minimum.width {
+      var grown = content
+      grown.size = minimum
+      grown.origin.x = content.maxX - minimum.width
+      grown.origin.y = content.maxY - minimum.height
+      window.setFrame(window.frameRect(forContentRect: grown), display: true)
+    }
+  }
+
+  /// Wide enough for the traffic lights plus the title-bar capsules.
+  private func minimumContentSize(aspect: NSSize) -> NSSize {
+    titlebarControls?.layoutSubtreeIfNeeded()
+    let controls = titlebarControls?.fittingSize.width ?? 0
+    let width = max(290, (controls + 96).rounded())
+    return NSSize(width: width, height: (width * aspect.height / aspect.width).rounded())
   }
 
   // MARK: chrome reveal — iPhone-Mirroring style
@@ -688,7 +725,7 @@ final class MirrorWindowController: NSWindowController {
     let aspect = aspectRatio(for: size)
     window.contentAspectRatio = aspect
     // Narrower than this and the title-bar capsules run into the traffic lights.
-    window.contentMinSize = NSSize(width: 290, height: (290 * aspect.height / aspect.width).rounded())
+    window.contentMinSize = minimumContentSize(aspect: aspect)
 
     if !hasSetInitialFrame {
       hasSetInitialFrame = true

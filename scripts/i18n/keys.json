@@ -157,5 +157,7 @@
 "Language",
 "System Default",
 "Restart Now",
-"Restart %@ to use the new language."
+"Restart %@ to use the new language.",
+"Show Navigation Buttons",
+"Hide Navigation Buttons"
 ]
