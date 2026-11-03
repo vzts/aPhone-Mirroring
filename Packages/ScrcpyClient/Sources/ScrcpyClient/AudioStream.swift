@@ -43,9 +43,10 @@ public enum AudioCodec: Sendable, Equatable {
 ///   bits 61-0  : PTS in microseconds
 ///   bytes 8-11 : payload size (u32)
 public struct AudioFrame: Sendable {
-  public static let configFlag: UInt64 = 1 << 63
-  public static let keyFrameFlag: UInt64 = 1 << 62
-  public static let ptsMask: UInt64 = 0x3FFF_FFFF_FFFF_FFFF
+  // scrcpy 4.0+: bit 63 is the session-packet flag (never set for audio).
+  public static let configFlag: UInt64 = 1 << 62
+  public static let keyFrameFlag: UInt64 = 1 << 61
+  public static let ptsMask: UInt64 = (1 << 61) - 1
 
   public let pts: UInt64
   public let isConfig: Bool

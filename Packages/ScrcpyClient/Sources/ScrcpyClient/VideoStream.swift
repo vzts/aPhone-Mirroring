@@ -4,14 +4,16 @@ import SharedModels
 
 /// One frame as delivered by scrcpy-server over the video socket.
 ///
-/// Header layout (12 bytes, big-endian):
-///   bits 63-62 : flags (bit 63 = CONFIG, bit 62 = KEY_FRAME)
-///   bits 61-0  : PTS in microseconds
-///   bytes 8-11 : payload size (u32)
+/// Every packet starts with a 12-byte big-endian header whose top bit tells
+/// session packets from media packets (scrcpy 4.0+):
+///   session: bit 63 = 1, bit 32 = client-resized, bytes 4-7 width, 8-11 height
+///   media:   bit 63 = 0, bit 62 = CONFIG, bit 61 = KEY_FRAME,
+///            bits 60-0 = PTS (µs), bytes 8-11 = payload size (u32)
 public struct VideoFrame: Sendable {
-  public static let configFlag: UInt64 = 1 << 63
-  public static let keyFrameFlag: UInt64 = 1 << 62
-  public static let ptsMask: UInt64 = 0x3FFF_FFFF_FFFF_FFFF
+  public static let sessionFlag: UInt64 = 1 << 63
+  public static let configFlag: UInt64 = 1 << 62
+  public static let keyFrameFlag: UInt64 = 1 << 61
+  public static let ptsMask: UInt64 = (1 << 61) - 1
 
   public let pts: UInt64          // microseconds; .max for config packets
   public let isConfig: Bool
@@ -26,8 +28,10 @@ public struct VideoFrame: Sendable {
   }
 }
 
-/// Reads the scrcpy 3.x video framing protocol off an `NWConnection`.
-/// Each call to `nextFrame()` reads one 12-byte header followed by `size` bytes of payload.
+/// Reads the scrcpy 5.x video framing protocol off an `NWConnection`.
+/// `nextFrame()` returns the next media packet. Session packets (one per
+/// capture session, e.g. after a rotation) are skipped: the renderer picks up
+/// size changes from the decoded frames themselves.
 public actor VideoStream {
   private let conn: NWConnection
 
@@ -36,8 +40,12 @@ public actor VideoStream {
   }
 
   public func nextFrame() async throws -> VideoFrame {
-    let header = try await readExact(12)
-    let pts64 = header.subdata(in: 0..<8).withUnsafeBytes { $0.load(as: UInt64.self) }.bigEndian
+    var header = try await readExact(12)
+    var pts64 = header.subdata(in: 0..<8).withUnsafeBytes { $0.load(as: UInt64.self) }.bigEndian
+    while pts64 & VideoFrame.sessionFlag != 0 {
+      header = try await readExact(12)
+      pts64 = header.subdata(in: 0..<8).withUnsafeBytes { $0.load(as: UInt64.self) }.bigEndian
+    }
     let size = header.subdata(in: 8..<12).withUnsafeBytes { $0.load(as: UInt32.self) }.bigEndian
 
     let isConfig = (pts64 & VideoFrame.configFlag) != 0

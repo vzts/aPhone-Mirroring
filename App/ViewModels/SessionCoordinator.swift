@@ -246,7 +246,7 @@ final class SessionCoordinator: ObservableObject {
       }()
       if (isAudioError || isScrcpyError), let c = controller {
         let reason = isAudioError ? "audio unavailable" : "scrcpy protocol error"
-        log.warning("\(reason) for \(device.id) — retrying without audio")
+        log.warning("\(reason) for \(device.id): \(error.localizedDescription, privacy: .public) — retrying without audio")
         // Clean up the failed server process + reverse forward before retrying.
         await c.session.stop()
         do {

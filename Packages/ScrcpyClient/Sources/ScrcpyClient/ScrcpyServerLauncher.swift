@@ -9,7 +9,7 @@ private let log = Logger(subsystem: "com.droidmirroring.app", category: "scrcpy"
 /// scrcpy-server protocol version this client targets.
 /// Must match the bundled `scrcpy-server-v<X>.jar` in App/Resources/.
 public enum ScrcpyServerVersion {
-  public static let current = "3.1"
+  public static let current = "5.0.1"
 }
 
 public struct ScrcpyOptions: Sendable {
@@ -255,13 +255,20 @@ public actor ScrcpyServerLauncher {
     let height: UInt32
   }
 
+  /// Device name (64 bytes) and codec id (u32), then the first session
+  /// packet carries the initial video size (scrcpy 4.0+: 12 bytes, top bit
+  /// set, width and height as u32 in bytes 4-11).
   private func readVideoMetadata(_ conn: NWConnection) async throws -> VideoMetadata {
-    let header = try await readExact(conn, count: 64 + 4 + 4 + 4)
+    let header = try await readExact(conn, count: 64 + 4)
     let name = String(data: header[0..<64], encoding: .utf8)?
       .trimmingCharacters(in: CharacterSet(charactersIn: "\0")) ?? ""
     let codecId = header.subdata(in: 64..<68).withUnsafeBytes { $0.load(as: UInt32.self) }.bigEndian
-    let width = header.subdata(in: 68..<72).withUnsafeBytes { $0.load(as: UInt32.self) }.bigEndian
-    let height = header.subdata(in: 72..<76).withUnsafeBytes { $0.load(as: UInt32.self) }.bigEndian
+    let session = try await readExact(conn, count: 12)
+    guard session[session.startIndex] & 0x80 != 0 else {
+      throw DroidMirroringError.scrcpyProtocol("expected a video session packet")
+    }
+    let width = session.subdata(in: 4..<8).withUnsafeBytes { $0.load(as: UInt32.self) }.bigEndian
+    let height = session.subdata(in: 8..<12).withUnsafeBytes { $0.load(as: UInt32.self) }.bigEndian
     return VideoMetadata(deviceName: name, codecId: codecId, width: width, height: height)
   }
 
