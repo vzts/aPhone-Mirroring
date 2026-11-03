@@ -10,7 +10,7 @@ wire protocol — no `scrcpy` CLI is ever spawned.
 
 ```
 +------------------------------------------------------+
-|                  DroidMirroring.app (main)                  |
+|                  aPhone Mirroring.app (main)                  |
 |                                                      |
 |   SwiftUI UI ─► SessionCoordinator ─► MirrorWindow   |
 |        │              │                              |

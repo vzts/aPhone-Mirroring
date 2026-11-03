@@ -9,7 +9,7 @@ import SharedModels
 /// Implementation notes:
 /// - Uses the C `sqlite3` API (ships with macOS — no SPM dep).
 /// - One database per device, lives at
-///   `~/Library/Caches/com.droidmirroring.app.DroidMirroring/<serial>/cache.db`.
+///   `~/Library/Caches/io.github.vzts.aphonemirroring/<serial>/cache.db`.
 /// - All access is serialized through this actor; SQLite connection is held for
 ///   the actor's lifetime.
 public actor SyncCache {
@@ -167,7 +167,7 @@ public extension SyncCache {
     let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
       ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Caches")
     return caches
-      .appendingPathComponent("com.droidmirroring.app.DroidMirroring")
+      .appendingPathComponent("io.github.vzts.aphonemirroring")
       .appendingPathComponent(serial)
       .appendingPathComponent("cache.db")
   }

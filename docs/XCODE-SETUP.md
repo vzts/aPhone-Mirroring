@@ -13,8 +13,8 @@ brew install xcodegen
 
 ```sh
 ./scripts/bootstrap.sh   # 拉 scrcpy-server.jar / adb
-xcodegen generate        # 重新生成 DroidMirroring.xcodeproj
-open DroidMirroring.xcodeproj
+xcodegen generate        # 重新生成 aPhoneMirroring.xcodeproj
+open aPhoneMirroring.xcodeproj
 ```
 
 ## targets

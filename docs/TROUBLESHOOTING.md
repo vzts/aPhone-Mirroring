@@ -100,7 +100,7 @@ lands.
 
 ## App is completely silent under `nohup` / log file redirect
 
-**Symptom:** Running `nohup ./DroidMirroring.app/Contents/MacOS/DroidMirroring > /tmp/log 2>&1 &`
+**Symptom:** Running `nohup ./aPhone Mirroring.app/Contents/MacOS/DroidMirroring > /tmp/log 2>&1 &`
 produces an empty log even though the App is clearly running.
 
 **Cause:** stdio is line-buffered (or fully buffered) by default; under a
@@ -165,8 +165,8 @@ A Debug build will work locally; a Release build will not.
 **Fix:** Either run via Xcode (which prevents Gatekeeper from intervening) or
 notarize first:
 ```sh
-xcrun notarytool submit DroidMirroring.app.zip --apple-id … --team-id … --wait
-xcrun stapler staple DroidMirroring.app
+xcrun notarytool submit aPhone Mirroring.app.zip --apple-id … --team-id … --wait
+xcrun stapler staple aPhone Mirroring.app
 ```
 M5 will automate this in `scripts/build-dmg.sh`.
 

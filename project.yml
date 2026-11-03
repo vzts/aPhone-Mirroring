@@ -1,11 +1,11 @@
-# XcodeGen spec — generate DroidMirroring.xcodeproj.
+# XcodeGen spec — generate aPhoneMirroring.xcodeproj.
 # Install: brew install xcodegen
 # Generate:  xcodegen generate
 # Reference: https://github.com/yonaskolb/XcodeGen
 
-name: DroidMirroring
+name: aPhoneMirroring
 options:
-  bundleIdPrefix: com.droidmirroring.app
+  bundleIdPrefix: io.github.vzts.aphonemirroring
   deploymentTarget:
     macOS: "15.0"
   developmentLanguage: zh-Hans
@@ -36,13 +36,15 @@ packages:
   SharedModels:    { path: Packages/SharedModels }
 
 targets:
-  DroidMirroring:
+  aPhoneMirroring:
     type: application
     platform: macOS
     sources:
       - App
     settings:
       base:
+        PRODUCT_NAME: "aPhone Mirroring"
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.vzts.aphonemirroring
         SWIFT_VERSION: "5.10"
         SWIFT_STRICT_CONCURRENCY: off
     resources:
@@ -66,25 +68,26 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: "Droid Mirroring"
+        CFBundleDisplayName: "aPhone Mirroring"
+        CFBundleName: "aPhone Mirroring"
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.productivity
         NSHighResolutionCapable: true
-        NSLocalNetworkUsageDescription: "Droid Mirroring uses the local network to discover Android devices in Wireless ADB mode and to pair with them over a TLS link."
+        NSLocalNetworkUsageDescription: "aPhone Mirroring uses the local network to discover Android devices in Wireless ADB mode and to pair with them over a TLS link."
         NSBonjourServices:
           - _adb._tcp
           - _adb-tls-connect._tcp
           - _adb-tls-pairing._tcp
     entitlements:
-      path: App/DroidMirroring.entitlements
+      path: App/aPhoneMirroring.entitlements
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.network.server: true
         com.apple.security.device.usb: true
         com.apple.security.application-groups:
-          - group.com.droidmirroring.shared
+          - group.io.github.vzts.aphonemirroring.shared
         com.apple.security.files.user-selected.read-write: true
     dependencies:
       - package: SharedModels
@@ -122,11 +125,11 @@ targets:
     platform: macOS
     sources: [Helpers/ScreenMirroring]
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.droidmirroring.app.DroidMirroring.ScreenMirroring
+      PRODUCT_BUNDLE_IDENTIFIER: io.github.vzts.aphonemirroring.ScreenMirroring
     info:
       path: Helpers/ScreenMirroring/Info.plist
       properties:
-        CFBundleDisplayName: "Screen Mirroring — Droid Mirroring"
+        CFBundleDisplayName: "Screen Mirroring — aPhone Mirroring"
         LSUIElement: true
     dependencies:
       - package: MirrorEngine
@@ -137,11 +140,11 @@ targets:
     platform: macOS
     sources: [Helpers/FusionMode]
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.droidmirroring.app.DroidMirroring.FusionMode
+      PRODUCT_BUNDLE_IDENTIFIER: io.github.vzts.aphonemirroring.FusionMode
     info:
       path: Helpers/FusionMode/Info.plist
       properties:
-        CFBundleDisplayName: "Fusion Mode — Droid Mirroring"
+        CFBundleDisplayName: "Fusion Mode — aPhone Mirroring"
         LSUIElement: true
     dependencies:
       - package: FusionEngine
@@ -152,11 +155,11 @@ targets:
     platform: macOS
     sources: [Helpers/ContinueOn]
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.droidmirroring.app.DroidMirroring.ContinueOn
+      PRODUCT_BUNDLE_IDENTIFIER: io.github.vzts.aphonemirroring.ContinueOn
     info:
       path: Helpers/ContinueOn/Info.plist
       properties:
-        CFBundleDisplayName: "Continue On — Droid Mirroring"
+        CFBundleDisplayName: "Continue On — aPhone Mirroring"
         LSUIElement: true
 
   FileProviderExt:
@@ -164,7 +167,7 @@ targets:
     platform: macOS
     sources: [Extensions/FileProviderExt]
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.droidmirroring.app.DroidMirroring.FileProvider
+      PRODUCT_BUNDLE_IDENTIFIER: io.github.vzts.aphonemirroring.FileProvider
       SWIFT_VERSION: "5"
       SWIFT_STRICT_CONCURRENCY: off
     info:
@@ -179,7 +182,7 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.application-groups:
-          - group.com.droidmirroring.shared
+          - group.io.github.vzts.aphonemirroring.shared
     dependencies:
       - package: ADBKit
       - package: SharedModels
@@ -189,7 +192,7 @@ targets:
     platform: macOS
     sources: [Extensions/ThumbnailExt]
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.droidmirroring.app.DroidMirroring.Thumbnail
+      PRODUCT_BUNDLE_IDENTIFIER: io.github.vzts.aphonemirroring.Thumbnail
     info:
       path: Extensions/ThumbnailExt/Info.plist
       properties:

@@ -6,7 +6,7 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.droidmirroring.shared</string>
+		<string>group.io.github.vzts.aphonemirroring.shared</string>
 	</array>
 	<key>com.apple.security.network.client</key>
 	<true/>

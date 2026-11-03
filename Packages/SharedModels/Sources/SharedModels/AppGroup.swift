@@ -2,7 +2,7 @@ import Foundation
 import os
 
 public enum AppGroup {
-  public static let identifier = "group.com.droidmirroring.app.shared"
+  public static let identifier = "group.io.github.vzts.aphonemirroring.shared"
 
   public static var containerURL: URL? {
     FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
@@ -10,9 +10,9 @@ public enum AppGroup {
 }
 
 /// Shared logger for the entire app and its packages.
-/// Use in Console.app with subsystem `com.droidmirroring.app` or:
-/// `log show --predicate 'subsystem=="com.droidmirroring.app"' --last 10m`
-public let dmLogger = Logger(subsystem: "com.droidmirroring.app", category: "app")
+/// Use in Console.app with subsystem `io.github.vzts.aphonemirroring` or:
+/// `log show --predicate 'subsystem=="io.github.vzts.aphonemirroring"' --last 10m`
+public let dmLogger = Logger(subsystem: "io.github.vzts.aphonemirroring", category: "app")
 
 public enum DroidMirroringError: Error, Sendable {
   case unimplemented(String)

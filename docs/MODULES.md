@@ -164,7 +164,7 @@ a package catalog. Per-app windowed "Fusion" mode proper is still planned.
 | `FusionModeHelper` | `Helpers/FusionMode/main.swift` | `com.droidmirroring.app.DroidMirroring.FusionMode` | M4 stub |
 | `ContinueOnHelper` | `Helpers/ContinueOn/main.swift` | `com.droidmirroring.app.DroidMirroring.ContinueOn` | M5 stub |
 
-All three are embedded in `DroidMirroring.app/Contents/Helpers/`.
+All three are embedded in `aPhone Mirroring.app/Contents/Helpers/`.
 
 ### Extensions
 

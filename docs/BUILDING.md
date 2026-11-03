@@ -28,7 +28,7 @@ cd /Users/matrix/.config/DroidMirroring
 xcodegen generate
 
 # 3. Open it.
-open DroidMirroring.xcodeproj
+open aPhoneMirroring.xcodeproj
 ```
 
 `scripts/bootstrap.sh` calls:
@@ -43,8 +43,8 @@ open DroidMirroring.xcodeproj
 ### Debug
 
 ```sh
-xcodebuild -project DroidMirroring.xcodeproj \
-           -scheme DroidMirroring \
+xcodebuild -project aPhoneMirroring.xcodeproj \
+           -scheme aPhoneMirroring \
            -configuration Debug \
            -destination 'platform=macOS' \
            build
@@ -61,8 +61,8 @@ then:
 
 ```sh
 xcodegen generate
-xcodebuild -project DroidMirroring.xcodeproj \
-           -scheme DroidMirroring \
+xcodebuild -project aPhoneMirroring.xcodeproj \
+           -scheme aPhoneMirroring \
            -configuration Release \
            build
 ```
@@ -146,7 +146,7 @@ To enable Finder integration:
 Regenerate the project after editing `project.yml`:
 
 ```sh
-xcodegen generate && open DroidMirroring.xcodeproj
+xcodegen generate && open aPhoneMirroring.xcodeproj
 ```
 
 Refresh bundled binaries (when bumping scrcpy or platform-tools):
@@ -165,9 +165,9 @@ swift test --package-path Packages/ADBKit --filter DisplayInfoTests
 Build the LSUIElement helpers individually:
 
 ```sh
-xcodebuild -project DroidMirroring.xcodeproj -scheme ScreenMirroringHelper build
-xcodebuild -project DroidMirroring.xcodeproj -scheme FusionModeHelper build
-xcodebuild -project DroidMirroring.xcodeproj -scheme ContinueOnHelper build
+xcodebuild -project aPhoneMirroring.xcodeproj -scheme ScreenMirroringHelper build
+xcodebuild -project aPhoneMirroring.xcodeproj -scheme FusionModeHelper build
+xcodebuild -project aPhoneMirroring.xcodeproj -scheme ContinueOnHelper build
 ```
 
 (They embed automatically into the main App bundle on a top-level build.)

@@ -86,7 +86,7 @@ final class FilesViewModel: ObservableObject {
   var localDownloadRoot: URL {
     let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
       ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")
-    return downloads.appendingPathComponent("DroidMirroring").appendingPathComponent(device.id)
+    return downloads.appendingPathComponent("aPhone Mirroring").appendingPathComponent(device.id)
   }
 
   private func joinRemote(_ base: String, _ child: String) -> String {

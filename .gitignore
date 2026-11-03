@@ -7,7 +7,7 @@ DerivedData/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 # .xcodeproj is regenerated from project.yml via xcodegen
-macDroS.xcodeproj/
+aPhoneMirroring.xcodeproj/
 
 # SwiftPM
 .build/

@@ -4,7 +4,7 @@ import os
 import ADBKit
 import SharedModels
 
-private let log = Logger(subsystem: "com.droidmirroring.app", category: "scrcpy")
+private let log = Logger(subsystem: "io.github.vzts.aphonemirroring", category: "scrcpy")
 
 /// scrcpy-server protocol version this client targets.
 /// Must match the bundled `scrcpy-server-v<X>.jar` in App/Resources/.

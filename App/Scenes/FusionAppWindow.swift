@@ -54,7 +54,7 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
     window.center()
     super.init(window: window)
 
-    let toolbar = NSToolbar(identifier: "com.droidmirroring.app.fusion.toolbar")
+    let toolbar = NSToolbar(identifier: "io.github.vzts.aphonemirroring.fusion.toolbar")
     toolbar.delegate = self
     toolbar.displayMode = .iconOnly
     toolbar.allowsUserCustomization = false
@@ -107,9 +107,9 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
   // MARK: NSToolbarDelegate
 
   private enum ToolbarID {
-    static let screenshot = NSToolbarItem.Identifier("droidmirroring.fusion.screenshot")
-    static let record     = NSToolbarItem.Identifier("droidmirroring.fusion.record")
-    static let pin        = NSToolbarItem.Identifier("droidmirroring.fusion.pin")
+    static let screenshot = NSToolbarItem.Identifier("aphonemirroring.fusion.screenshot")
+    static let record     = NSToolbarItem.Identifier("aphonemirroring.fusion.record")
+    static let pin        = NSToolbarItem.Identifier("aphonemirroring.fusion.pin")
   }
 
   func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -230,7 +230,7 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
   private func movieRoot() -> URL {
     let base = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
       ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Movies")
-    let dir = base.appendingPathComponent("DroidMirroring").appendingPathComponent(appLabel)
+    let dir = base.appendingPathComponent("aPhone Mirroring").appendingPathComponent(appLabel)
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     return dir
   }
@@ -292,13 +292,13 @@ private struct MirrorViewHost: NSViewRepresentable {
 
 extension FusionAppWindowController: NSToolbarItemValidation {
   func validateToolbarItem(_ item: NSToolbarItem) -> Bool {
-    if item.itemIdentifier.rawValue == "droidmirroring.fusion.record" {
+    if item.itemIdentifier.rawValue == "aphonemirroring.fusion.record" {
       item.image = NSImage(
         systemSymbolName: isRecording ? "stop.circle.fill" : "record.circle",
         accessibilityDescription: isRecording ? "Stop Recording" : "Record"
       )
     }
-    if item.itemIdentifier.rawValue == "droidmirroring.fusion.pin" {
+    if item.itemIdentifier.rawValue == "aphonemirroring.fusion.pin" {
       item.image = NSImage(
         systemSymbolName: isPinned ? "pin.fill" : "pin",
         accessibilityDescription: isPinned ? "Unpin Window" : "Pin Window"

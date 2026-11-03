@@ -60,7 +60,7 @@ public actor ADBInstaller {
 
   private func installXapk(localURL: URL, serial: String, replace: Bool) async throws -> String? {
     let tempDir = FileManager.default.temporaryDirectory
-      .appendingPathComponent("droidmirroring-xapk-\(UUID().uuidString)", isDirectory: true)
+      .appendingPathComponent("aphonemirroring-xapk-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: tempDir) }
 

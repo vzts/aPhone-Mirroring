@@ -5,7 +5,7 @@ import os
 import ScrcpyClient
 import SharedModels
 
-private let log = Logger(subsystem: "com.droidmirroring.app", category: "mirror")
+private let log = Logger(subsystem: "io.github.vzts.aphonemirroring", category: "mirror")
 
 /// One mirror session = one scrcpy server + one VideoStream + one VTDecoder + one renderer host.
 /// Owns the receive loop; the caller binds a `FrameSink` to draw frames into a window.

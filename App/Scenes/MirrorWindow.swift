@@ -759,7 +759,7 @@ final class MirrorWindowController: NSWindowController {
   private func movieRoot() -> URL {
     let base = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
       ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Movies")
-    let dir = base.appendingPathComponent("DroidMirroring").appendingPathComponent(deviceDisplayName)
+    let dir = base.appendingPathComponent("aPhone Mirroring").appendingPathComponent(deviceDisplayName)
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     return dir
   }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wipe regenerable build artifacts for macDros.
+# Wipe regenerable build artifacts for aPhone Mirroring.
 #
 #   ./scripts/clean.sh           SPM .build/ + project DerivedData (default)
 #   ./scripts/clean.sh --light   SPM .build/ only (fastest; leaves Xcode cache)
@@ -49,13 +49,13 @@ echo "    cleared"
 
 if [[ "${MODE}" != "--light" ]]; then
   echo "==> Xcode DerivedData (this project only)"
-  rm -rf "${HOME}/Library/Developer/Xcode/DerivedData/DroidMirroring-"*
+  rm -rf "${HOME}/Library/Developer/Xcode/DerivedData/aPhoneMirroring-"*
   echo "    cleared"
 fi
 
 if [[ "${MODE}" == "--all" ]]; then
   echo "==> generated .xcodeproj"
-  rm -rf "${ROOT}/DroidMirroring.xcodeproj"
+  rm -rf "${ROOT}/aPhoneMirroring.xcodeproj"
   echo "    cleared — rerun: xcodegen generate"
 
   echo "==> fetched binaries (adb, scrcpy-server, Licenses)"

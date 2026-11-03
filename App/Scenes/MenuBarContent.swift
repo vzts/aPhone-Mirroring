@@ -40,7 +40,7 @@ struct MenuBarContent: View {
           NSApp.activate(ignoringOtherApps: true)
           openSettings()
         }
-        MenuRow(title: "Quit Droid Mirroring", symbol: "power", shortcut: "⌘Q") {
+        MenuRow(title: "Quit \(AppInfo.name)", symbol: "power", shortcut: "⌘Q") {
           NSApp.terminate(nil)
         }
         .keyboardShortcut("q", modifiers: .command)
@@ -57,7 +57,7 @@ struct MenuBarContent: View {
         .resizable()
         .frame(width: 30, height: 30)
       VStack(alignment: .leading, spacing: 1) {
-        Text(verbatim: "Droid Mirroring").font(.headline)
+        Text(verbatim: AppInfo.name).font(.headline)
         Text(statusText).font(.caption).foregroundStyle(.secondary)
       }
       Spacer()

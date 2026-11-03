@@ -8,7 +8,7 @@ import FusionEngine
 import SharedModels
 import os
 
-private let log = Logger(subsystem: "com.droidmirroring.app", category: "coordinator")
+private let log = Logger(subsystem: "io.github.vzts.aphonemirroring", category: "coordinator")
 
 /// Top-level glue between UI and engines. Owned by `DroidMirroringApp`.
 ///

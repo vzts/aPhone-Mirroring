@@ -4,7 +4,7 @@ import Carbon.HIToolbox
 import ScrcpyClient
 import os
 
-private let log = Logger(subsystem: "com.droidmirroring.app", category: "uhid")
+private let log = Logger(subsystem: "io.github.vzts.aphonemirroring", category: "uhid")
 
 enum HIDKeyboard {
   static let descriptor: Data = Data([

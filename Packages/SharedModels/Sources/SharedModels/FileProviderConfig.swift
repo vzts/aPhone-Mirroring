@@ -6,7 +6,7 @@ public enum FileProviderConfig {
   /// One Finder sidebar entry per Android device.
   /// `domainIdentifier` == device serial, prefixed so we can tell ours apart in
   /// `NSFileProviderManager.getDomainsWithCompletionHandler`.
-  public static let domainPrefix = "com.droidmirroring.app.device."
+  public static let domainPrefix = "io.github.vzts.aphonemirroring.device."
 
   public static func domainIdentifier(forSerial serial: String) -> NSFileProviderDomainIdentifier {
     NSFileProviderDomainIdentifier(rawValue: "\(domainPrefix)\(serial)")

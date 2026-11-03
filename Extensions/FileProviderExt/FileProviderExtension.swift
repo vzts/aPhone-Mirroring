@@ -85,7 +85,7 @@ final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
         let conn = try await self.adb.openSyncTransport(serial: self.serial)
         let session = SyncSession(connection: conn)
         let entry = try await session.stat(remotePath)
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("droidmirroring-fp-\(UUID().uuidString)", isDirectory: true)
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("aphonemirroring-fp-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let local = dir.appendingPathComponent((remotePath as NSString).lastPathComponent)
         // Reuse the same sync session for stat + recv (saves a round-trip).

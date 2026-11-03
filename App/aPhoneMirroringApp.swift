@@ -6,9 +6,9 @@ import DeviceDiscovery
 import SharedModels
 
 @main
-struct DroidMirroringApp: App {
+struct APhoneMirroringApp: App {
   init() {
-    setvbuf(stdout, nil, _IONBF, 0)   // log to /tmp/droidmirroring.log without buffering
+    setvbuf(stdout, nil, _IONBF, 0)   // log to /tmp/aphonemirroring.log without buffering
     setvbuf(stderr, nil, _IONBF, 0)
   }
 
@@ -18,7 +18,7 @@ struct DroidMirroringApp: App {
   var body: some Scene {
     // No main window: the phone-shaped Connect / Mirror windows are the app.
     // Everything else lives in the menu bar extra, the Device menu, and Settings.
-    MenuBarExtra("Droid Mirroring", systemImage: "iphone.gen3", isInserted: $showMenuBarIcon) {
+    MenuBarExtra(AppInfo.name, systemImage: "iphone.gen3", isInserted: $showMenuBarIcon) {
       MenuBarContent()
         .environmentObject(appDelegate.monitor)
     }
@@ -27,18 +27,15 @@ struct DroidMirroringApp: App {
       CommandGroup(replacing: .newItem) {}
       CommandGroup(after: .appInfo) {
         Button("Check for Updates…") {
-          NSWorkspace.shared.open(URL(string: "https://github.com/matyle/droidMirroring-mac/releases/latest")!)
+          NSWorkspace.shared.open(AppInfo.repository.appendingPathComponent("releases/latest"))
         }
       }
       CommandMenu("Device") {
         DeviceCommands()
       }
       CommandGroup(replacing: .help) {
-        Button("Official Website") {
-          NSWorkspace.shared.open(URL(string: "https://droidmirroring.pages.dev")!)
-        }
         Button("GitHub Repository") {
-          NSWorkspace.shared.open(URL(string: "https://github.com/matyle/droidMirroring-mac")!)
+          NSWorkspace.shared.open(AppInfo.repository)
         }
       }
     }
@@ -110,6 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   private var deviceCancellable: AnyCancellable?
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    AppInfo.migrateSettingsFromDroidMirroring()
     SessionCoordinator.shared.monitor = monitor
     // Keep a Dock icon — without it, users have no visible signal that the
     // app is running until they spot the menu bar item. The Dock icon also

@@ -136,7 +136,7 @@ final class PairingModel: ObservableObject {
 
   // MARK: helpers
 
-  private static func newQRName() -> String { "DroidMirroring-\(Int.random(in: 1000...9999))" }
+  private static func newQRName() -> String { "aPhone-\(Int.random(in: 1000...9999))" }
   private static func newQRPassword() -> String { String(format: "%06d", Int.random(in: 0..<1_000_000)) }
 
   static func describe(_ error: Error) -> String {
@@ -148,7 +148,7 @@ final class PairingModel: ObservableObject {
     case .pairingSwitchFailed: return String(localized: "Device rejected the pairing.")
     case .connectUnverified: return String(localized: "Device is not authorized — accept the prompt on Android.")
     case .addressInvalid(let s): return String(localized: "Invalid address: \(s)")
-    case .adbMissing: return String(localized: "Bundled adb is missing — reinstall DroidMirroring.")
+    case .adbMissing: return String(localized: "Bundled adb is missing — reinstall \(AppInfo.name).")
     case .adb(let s): return s.isEmpty ? String(localized: "adb returned an unknown error.") : s
     }
   }
