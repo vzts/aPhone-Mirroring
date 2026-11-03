@@ -2,6 +2,23 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.0.2] - 2026-11-03
+
+### Fixed
+- The phone's on-screen keyboard now appears while mirroring, so you can
+  type on the phone itself. The phone's setting is put back when the mirror
+  ends.
+- Closing a mirror or Desktop Mode window with the close button now ends the
+  session on the phone: the phone sleeps normally again and Desktop Mode's
+  virtual display goes away.
+- A Wi-Fi blip while connecting no longer leaves a "Couldn't start mirroring"
+  alert that blocks auto-mirroring; the mirror reopens when the phone is back.
+- The no-audio and H.264 fallbacks now also apply when the mirror restarts
+  after a settings or display change.
+- The mirror no longer restarts right after it opens because it mistook its
+  own virtual display for a new phone screen.
+- Desktop Mode and Files windows show the phone's name instead of its model.
+
 ## [v2.0.1] - 2026-11-03
 
 ### Changed
