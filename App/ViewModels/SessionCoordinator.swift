@@ -324,6 +324,34 @@ final class SessionCoordinator: ObservableObject {
     return c
   }
 
+  /// The Connect window just paired or connected `serial`. Starts or shows
+  /// that phone's mirror and returns what to tell the user: the phone may
+  /// already be on screen (under another of its connections, too), or
+  /// auto-mirroring may be off.
+  func phonePaired(serial: String) async -> String {
+    var phone = monitor?.publishedSerial(for: serial)
+    for _ in 0..<10 where phone == nil {  // the monitor may not have seen it yet
+      try? await Task.sleep(nanoseconds: 300_000_000)
+      phone = monitor?.publishedSerial(for: serial)
+    }
+    // adb can report "connected" for a connection that stays offline; there's
+    // nothing to mirror yet, and auto-mirror takes over if it comes up.
+    guard let id = phone else { return String(localized: "Connected.") }
+    if let existing = mirrorWindows[id] {
+      existing.window?.makeKeyAndOrderFront(nil)
+      closeConnectWindow()
+      return String(localized: "Connected.")
+    }
+    let autoEnabled = UserDefaults.standard.object(forKey: "mirror.autoOnConnect") as? Bool ?? true
+    guard autoEnabled else { return String(localized: "Connected.") }
+    if !startingMirrors.contains(id) {
+      autoMirroredSerials.insert(id)
+      let device = monitor?.devices.first { $0.id == id } ?? Device(id: id, state: .online)
+      Task { await startMirror(for: device) }
+    }
+    return String(localized: "Connected. Starting Mirror…")
+  }
+
   func openFiles(for device: Device) {
     trustDevice(device.id)
     if let existing = filesWindows[device.id] {

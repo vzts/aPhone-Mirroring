@@ -76,7 +76,7 @@ final class PairingModel: ObservableObject {
         do {
           try await wireless.connect(host: host, port: port)
           SessionCoordinator.shared.trustDevice("\(host):\(port)")
-          phase = .succeeded(String(localized: "Connected."))
+          phase = .succeeded(await SessionCoordinator.shared.phonePaired(serial: "\(host):\(port)"))
         } catch {
           phase = .failed(Self.describe(error))
         }
@@ -104,8 +104,8 @@ final class PairingModel: ObservableObject {
       do {
         try await pair()
         phase = .working(String(localized: "Paired. Connecting…"))
-        try await finishPairing(host: pairHost)
-        phase = .succeeded(String(localized: "Connected. Starting Mirror…"))
+        let serial = try await finishPairing(host: pairHost)
+        phase = .succeeded(await SessionCoordinator.shared.phonePaired(serial: serial))
       } catch {
         qrPairingStarted = false
         phase = .failed(Self.describe(error))
@@ -115,7 +115,8 @@ final class PairingModel: ObservableObject {
 
   /// adb auto-connects freshly paired phones over mDNS within a second or two.
   /// Trust whatever serial that produces; connect by hand only if it doesn't.
-  private func finishPairing(host: String) async throws {
+  /// Returns the serial the phone came online as.
+  private func finishPairing(host: String) async throws -> String {
     for _ in 0..<12 {
       if let endpoint = browser.connectableDevices.first(where: { $0.host == host }) {
         let mdnsSerial = "\(endpoint.serviceName)._adb-tls-connect._tcp"
@@ -123,8 +124,9 @@ final class PairingModel: ObservableObject {
         SessionCoordinator.shared.trustDevice(mdnsSerial)
         SessionCoordinator.shared.trustDevice(ipSerial)
         let online = (try? await adb.listDevices())?.filter { $0.state == .online }.map(\.id) ?? []
-        if online.contains(mdnsSerial) || online.contains(ipSerial) { return }
-        if online.contains(where: { $0.hasPrefix(endpoint.serviceName) }) { return }
+        if online.contains(mdnsSerial) { return mdnsSerial }
+        if online.contains(ipSerial) { return ipSerial }
+        if let other = online.first(where: { $0.hasPrefix(endpoint.serviceName) }) { return other }
       }
       try await Task.sleep(nanoseconds: 500_000_000)
     }
@@ -132,6 +134,7 @@ final class PairingModel: ObservableObject {
       throw ADBWirelessClient.WirelessError.missingMDNS
     }
     try await wireless.connect(host: endpoint.host, port: endpoint.port)
+    return "\(endpoint.host):\(endpoint.port)"
   }
 
   // MARK: helpers
