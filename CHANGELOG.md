@@ -2,6 +2,16 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.0.4] - 2026-11-03
+
+### Fixed
+- Cmd-V pastes into the phone. The Mac's editing shortcuts (Cmd-X, Cmd-C,
+  Cmd-V, Cmd-A, Cmd-Z, Shift-Cmd-Z) and the Edit menu now work in the mirror
+  window; what you copy on the phone comes back to the Mac when clipboard
+  sharing is on.
+- Command shortcuts the app doesn't use no longer reach the phone, where they
+  could set off Android system shortcuts such as opening Settings.
+
 ## [v2.0.3] - 2026-11-03
 
 ### Fixed
