@@ -140,6 +140,11 @@ public actor ADBConnection {
   /// The value 96 is the Darwin errno; on Linux ENOMSG is 91 — but this code
   /// only runs on macOS so 96 is correct.
   private static func isENOMSG(_ error: Error) -> Bool {
+    // errno 96 on Darwin is ENODATA ("No message available on STREAM"), which
+    // the comments above call ENOMSG. Network.framework reports it as
+    // NWError.posix, which doesn't bridge to NSPOSIXErrorDomain — checking
+    // only the NSError form missed every case.
+    if let nw = error as? NWError, case .posix(let code) = nw { return code.rawValue == 96 }
     let ns = error as NSError
     return ns.domain == NSPOSIXErrorDomain && ns.code == 96
   }

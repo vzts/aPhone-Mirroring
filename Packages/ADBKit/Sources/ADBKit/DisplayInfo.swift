@@ -58,9 +58,20 @@ public extension ADBClient {
   ///   2. Each line atomically carries id + current size + current rotation:
   ///        `  Display{#0 state=ON size=2520x1080 ROTATION_90}:`
   ///      which sidesteps the device-vs-logical bridging mess in dumpsys display.
+  ///
+  /// Each mirror session adds a virtual display ("scrcpy") whose id keeps
+  /// climbing, so ids alone can't tell it from a panel; `cmd display
+  /// get-displays` reports each display's type, and only INTERNAL ones count.
   func physicalDisplays(serial: String) async throws -> [DisplayInfo] {
-    let raw = try await shell("dumpsys window", serial: serial)
-    return DisplayInfoParser.parseWindowDump(raw)
+    let raw = try await shell(
+      "dumpsys window | grep -E 'Display\\{#'; echo \(DisplayInfoParser.typesMarker); "
+        + "cmd display get-displays 2>/dev/null | grep -oE 'Display id [0-9]+:|type [A-Z_]+'",
+      serial: serial)
+    let parts = raw.components(separatedBy: DisplayInfoParser.typesMarker)
+    let displays = DisplayInfoParser.parseWindowDump(parts[0])
+    let types = DisplayInfoParser.parseDisplayTypes(parts.count > 1 ? parts[1] : "")
+    guard !types.isEmpty else { return displays }  // older Android: keep the id heuristic
+    return displays.filter { types[$0.id] == "INTERNAL" }
   }
 
   /// Pick the best display to mirror.
@@ -113,6 +124,23 @@ enum DisplayInfoParser {
     let lines = dump.components(separatedBy: "\n")
     let states = scanDeviceStates(lines)
     return scanLogicalDisplays(lines, states: states)
+  }
+
+  static let typesMarker = "__DISPLAY_TYPES__"
+
+  /// `Display id 0:` … `type INTERNAL` pairs (from `grep -oE`) → [id: type].
+  static func parseDisplayTypes(_ text: String) -> [Int: String] {
+    var types: [Int: String] = [:]
+    var current: Int?
+    for token in text.components(separatedBy: .newlines).map({ $0.trimmingCharacters(in: .whitespaces) }) {
+      if token.hasPrefix("Display id "), let id = Int(token.dropFirst("Display id ".count).dropLast()) {
+        current = id
+      } else if token.hasPrefix("type "), let id = current {
+        types[id] = String(token.dropFirst("type ".count))
+        current = nil
+      }
+    }
+    return types
   }
 
   /// Compact parser for `dumpsys window`. Looks for lines of the form:

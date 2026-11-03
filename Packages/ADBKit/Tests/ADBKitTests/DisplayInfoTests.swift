@@ -49,6 +49,23 @@ final class DisplayInfoTests: XCTestCase {
     XCTAssertEqual(infos[1].state, .doze)
   }
 
+  // MARK: parseDisplayTypes — tells panels from scrcpy's virtual displays
+
+  func test_parseDisplayTypes_marksScrcpyVirtualDisplay() {
+    // `cmd display get-displays | grep -oE 'Display id [0-9]+:|type [A-Z_]+'` on a Galaxy S23.
+    let text = """
+      Display id 0:
+      type INTERNAL
+      Display id 44:
+      type VIRTUAL
+      """
+    XCTAssertEqual(DisplayInfoParser.parseDisplayTypes(text), [0: "INTERNAL", 44: "VIRTUAL"])
+  }
+
+  func test_parseDisplayTypes_emptyWhenCommandMissing() {
+    XCTAssertTrue(DisplayInfoParser.parseDisplayTypes("").isEmpty)
+  }
+
   // MARK: parseWindowDump — the new path used at runtime
 
   func test_parseWindowDump_zFold_landscapeUnfolded() {
