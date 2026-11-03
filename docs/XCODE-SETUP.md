@@ -21,12 +21,12 @@ open aPhoneMirroring.xcodeproj
 
 | Target | Bundle ID | Type |
 |---|---|---|
-| `DroidMirroring` | `com.droidmirroring.app.DroidMirroring` | App (SwiftUI) |
-| `ScreenMirroringHelper` | `com.droidmirroring.app.DroidMirroring.ScreenMirroring` | LSUIElement App |
-| `FusionModeHelper` | `com.droidmirroring.app.DroidMirroring.FusionMode` | LSUIElement App |
-| `ContinueOnHelper` | `com.droidmirroring.app.DroidMirroring.ContinueOn` | LSUIElement App |
-| `FileProviderExt` | `com.droidmirroring.app.DroidMirroring.FileProvider` | NSExtension (fileprovider-nonui) |
-| `ThumbnailExt` | `com.droidmirroring.app.DroidMirroring.Thumbnail` | NSExtension (quicklook.thumbnail) |
+| `aPhoneMirroring` | `io.github.vzts.aphonemirroring` | App (SwiftUI) |
+| `ScreenMirroringHelper` | `io.github.vzts.aphonemirroring.ScreenMirroring` | LSUIElement App |
+| `FusionModeHelper` | `io.github.vzts.aphonemirroring.FusionMode` | LSUIElement App |
+| `ContinueOnHelper` | `io.github.vzts.aphonemirroring.ContinueOn` | LSUIElement App |
+| `FileProviderExt` | `io.github.vzts.aphonemirroring.FileProvider` | NSExtension (fileprovider-nonui) |
+| `ThumbnailExt` | `io.github.vzts.aphonemirroring.Thumbnail` | NSExtension (quicklook.thumbnail) |
 
 ## 签名
 
@@ -35,7 +35,7 @@ DEBUG 用 Personal Team 就行；Release 需在 `project.yml` 把 `DEVELOPMENT_T
 
 ## App Group
 
-所有 target 共用 `group.com.droidmirroring.app.shared` —— App / Helpers / Extensions
+所有 target 共用 `group.io.github.vzts.aphonemirroring.shared` —— App / Helpers / Extensions
 通过 `AppGroup.containerURL`（在 `SharedModels`）读写设备列表 + token。
 
 ## DMG 打包

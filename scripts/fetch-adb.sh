@@ -9,7 +9,7 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 source "${SCRIPT_DIR}/versions.env"
 
 OUT_DIR="${ROOT_DIR}/App/Resources"
-TMP_DIR="$(mktemp -d -t droidmirroring-adb-XXXXXX)"
+TMP_DIR="$(mktemp -d -t aphonemirroring-adb-XXXXXX)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
 ZIP_URL="https://dl.google.com/android/repository/platform-tools_r${PLATFORM_TOOLS_VERSION}-darwin.zip"

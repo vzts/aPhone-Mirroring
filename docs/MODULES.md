@@ -16,7 +16,7 @@ reads a file.
 |---|---|---|
 | `Device` (struct) | Device.swift | adb serial + model + transport + state + sdk |
 | `Device.Transport` / `Device.State` | Device.swift | enums |
-| `AppGroup` (enum, namespace) | AppGroup.swift | `identifier = "group.com.droidmirroring.app.shared"`, `containerURL` |
+| `AppGroup` (enum, namespace) | AppGroup.swift | `identifier = "group.io.github.vzts.aphonemirroring.shared"`, `containerURL` |
 | `DroidMirroringError` (enum) | AppGroup.swift | Every typed error in the project |
 | `FileProviderConfig` (enum, namespace) | FileProviderConfig.swift | Domain identifier helpers, dotfile filter |
 | `DeviceRoot` (enum) | FileProviderConfig.swift | `storage` / `sdCard` / `apps` synthetic top-level entries |
@@ -109,6 +109,7 @@ Metal render path (CVPixelBuffer → IOSurface texture → CAMetalLayer), and
 | `WirelessEndpoint` (struct) | WirelessBrowser.swift | one resolved Bonjour endpoint |
 | `WirelessEndpoint.Kind` | WirelessBrowser.swift | adb / tlsConnect / tlsPairing |
 | `WirelessBrowser` | WirelessBrowser.swift | three NWBrowsers; `pairingCandidates` / `connectableDevices` |
+| `PhoneConnections` (internal) | PhoneConnections.swift | lists a phone once when adb sees it over several connections |
 
 ### `FusionEngine`
 **Path:** `Packages/FusionEngine/`
@@ -135,34 +136,40 @@ a package catalog. Per-app windowed "Fusion" mode proper is still planned.
 
 ## App + non-package targets
 
-### `DroidMirroring` (main App)
+### `aPhoneMirroring` (main App)
 **Path:** `App/`
-**Bundle id:** `com.droidmirroring.app.DroidMirroring`
+**Bundle id:** `io.github.vzts.aphonemirroring`
 
 | Group | Files | Role |
 |---|---|---|
-| Entry | `droidMirroringApp.swift` | `@main`, scene graph, `DeviceMonitor` lifetime |
-| Scenes | `Scenes/MainView.swift` | NavigationSplitView + DeviceDashboard |
+| Entry | `aPhoneMirroringApp.swift` | `@main`, scene graph, menus, `DeviceMonitor` lifetime |
+|  | `AppInfo.swift` | app name, settings migration from DroidMirroring, language override |
+| Scenes | `Scenes/ConnectWindow.swift` | Connect window: QR, pairing code, IP address, USB |
 |  | `Scenes/MirrorWindow.swift` | NSWindowController hosting CAMetalLayer |
-|  | `Scenes/MirrorEventView.swift` | NSView that translates NSEvents → ControlMessage |
+|  | `Scenes/MirrorChrome.swift` | title-bar controls, shortcut table, window sizing |
+|  | `Scenes/MirrorEventView.swift` | NSView that translates NSEvents → ControlMessage; Edit menu actions |
 |  | `Scenes/MirrorKeyMap.swift` | mac keycode → Android keycode table |
+|  | `Scenes/FusionAppWindow.swift` | Desktop Mode window |
 |  | `Scenes/FilesWindow.swift` | NSWindowController for the files browser |
 |  | `Scenes/SettingsView.swift` | Settings scene |
 |  | `Scenes/MenuBarContent.swift` | MenuBarExtra contents |
-|  | `Scenes/PairingSheet.swift` | Wireless pair-by-code sheet |
-| ViewModels | `ViewModels/SessionCoordinator.swift` | mirror/files window lifecycle + fold polling |
+| Design | `DesignSystem/Glass.swift` | glass panels (Liquid Glass on macOS 26) |
+| ViewModels | `ViewModels/SessionCoordinator.swift` | mirror/files/desktop window lifecycle, auto-mirror, display polling |
+|  | `ViewModels/PairingModel.swift` | wireless pairing flow behind the Connect window |
+|  | `ViewModels/ClipboardBridge.swift` | two-way clipboard sync |
+|  | `ViewModels/UHIDKeyboard.swift` | UHID keyboard for typing from the Mac |
 |  | `ViewModels/FilesViewModel.swift` | per-device files-window state machine |
 |  | `ViewModels/FinderDomainCoordinator.swift` | adds/removes NSFileProviderDomain per online device |
 | Resources | `Resources/Assets.xcassets`, `Resources/scrcpy-server*.jar`, `Resources/adb`, `Resources/Licenses/` | bundled binaries + LICENSE files |
-| Entitlements | `DroidMirroring.entitlements` | sandbox + network + USB + app-group |
+| Entitlements | `aPhoneMirroring.entitlements` | sandbox + network + USB + app-group |
 
 ### Helpers (`LSUIElement=true` accessory apps)
 
 | Target | Path | Bundle id | State |
 |---|---|---|---|
-| `ScreenMirroringHelper` | `Helpers/ScreenMirroring/main.swift` | `com.droidmirroring.app.DroidMirroring.ScreenMirroring` | M2.x stub — empty NSApplication.run loop |
-| `FusionModeHelper` | `Helpers/FusionMode/main.swift` | `com.droidmirroring.app.DroidMirroring.FusionMode` | M4 stub |
-| `ContinueOnHelper` | `Helpers/ContinueOn/main.swift` | `com.droidmirroring.app.DroidMirroring.ContinueOn` | M5 stub |
+| `ScreenMirroringHelper` | `Helpers/ScreenMirroring/main.swift` | `io.github.vzts.aphonemirroring.ScreenMirroring` | M2.x stub — empty NSApplication.run loop |
+| `FusionModeHelper` | `Helpers/FusionMode/main.swift` | `io.github.vzts.aphonemirroring.FusionMode` | M4 stub |
+| `ContinueOnHelper` | `Helpers/ContinueOn/main.swift` | `io.github.vzts.aphonemirroring.ContinueOn` | M5 stub |
 
 All three are embedded in `aPhone Mirroring.app/Contents/Helpers/`.
 
@@ -170,8 +177,8 @@ All three are embedded in `aPhone Mirroring.app/Contents/Helpers/`.
 
 | Target | Path | Bundle id | Extension point |
 |---|---|---|---|
-| `FileProviderExt` | `Extensions/FileProviderExt/` | `com.droidmirroring.app.DroidMirroring.FileProvider` | `com.apple.fileprovider-nonui` |
-| `ThumbnailExt` | `Extensions/ThumbnailExt/` | `com.droidmirroring.app.DroidMirroring.Thumbnail` | `com.apple.quicklook.thumbnail` |
+| `FileProviderExt` | `Extensions/FileProviderExt/` | `io.github.vzts.aphonemirroring.FileProvider` | `com.apple.fileprovider-nonui` |
+| `ThumbnailExt` | `Extensions/ThumbnailExt/` | `io.github.vzts.aphonemirroring.Thumbnail` | `com.apple.quicklook.thumbnail` |
 
 `FileProviderExt` source:
 - `FileProviderExtension.swift` — `NSFileProviderReplicatedExtension`

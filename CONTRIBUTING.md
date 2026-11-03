@@ -1,6 +1,6 @@
-# Contributing to macDros
+# Contributing to aPhone Mirroring
 
-Welcome, and thanks for taking the time to look around. macDros is a small,
+Welcome, and thanks for taking the time to look around. aPhone Mirroring is a small,
 focused Mac client for mirroring and controlling Android devices, and we are
 happy to take patches, bug reports, device-compatibility notes, and ideas from
 anyone who finds the project useful. This document captures the conventions
@@ -9,18 +9,18 @@ that keep the codebase consistent.
 ## Quick start
 
 1. Read [docs/BUILDING.md](docs/BUILDING.md) for the full toolchain setup.
-2. Run `./scripts/bootstrap.sh` once to fetch vendored binaries and generate
-   the Xcode project.
-3. Open `DroidMirroring.xcodeproj`, pick the `macDros` scheme, and build.
+2. Run `./scripts/bootstrap.sh` once to fetch vendored binaries, then
+   `xcodegen generate` to create the Xcode project (Xcode 26 or later).
+3. Open `aPhoneMirroring.xcodeproj`, pick the `aPhoneMirroring` scheme, and build.
 
 ## Repo layout
 
 | Path           | What lives there                                              |
 | -------------- | ------------------------------------------------------------- |
 | `App/`         | SwiftUI macOS app target, windows, scenes, app-level glue     |
-| `Helpers/`     | Helper tools (privileged helper, FileProvider bridge, etc.)   |
+| `Helpers/`     | Accessory helper app targets (stubs for now)                  |
 | `Extensions/`  | App extensions (FileProvider, Quick Look thumbnails)          |
-| `Packages/`    | Swift packages — `ADBKit`, `MirrorKit`, `WirelessKit`, etc.   |
+| `Packages/`    | Swift packages — `ADBKit`, `ScrcpyClient`, `MirrorEngine`, etc. |
 | `scripts/`     | Build, bootstrap, release, signing scripts                    |
 | `docs/`        | Architecture notes, building, credits, roadmap                |
 
@@ -35,7 +35,7 @@ that keep the codebase consistent.
    ```
 4. Build the app to make sure nothing broke at the Xcode layer:
    ```
-   xcodebuild -scheme macDros -destination 'platform=macOS' build
+   xcodebuild -project aPhoneMirroring.xcodeproj -scheme aPhoneMirroring -destination 'platform=macOS' build
    ```
 5. Open a PR against `main`. Fill out the PR template, include before/after
    screenshots or a short screen recording for UI changes, and list the

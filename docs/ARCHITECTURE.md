@@ -1,6 +1,6 @@
 # Architecture
 
-DroidMirroring is a sandboxed macOS app that turns an Android device into a first-class
+aPhone Mirroring is a sandboxed macOS app that turns an Android device into a first-class
 workstation peripheral: screen mirroring, Finder file access, and (planned)
 multi-window Fusion mode. It is built on top of upstream
 [scrcpy](https://github.com/Genymobile/scrcpy) but talks to it directly over its
@@ -42,7 +42,7 @@ multiplexes transports.
 
 | Target | Type | Process model | Owns |
 |---|---|---|---|
-| `DroidMirroring` | App (SwiftUI) | Foreground GUI | Main window, mirror windows, files browser, device discovery |
+| `aPhoneMirroring` | App (SwiftUI) | Foreground GUI | Connect window, mirror windows, Desktop Mode, files browser, device discovery |
 | `ScreenMirroringHelper` | LSUIElement App | Background, no Dock | (M2.x stub) hosts mirror NSWindows so closing main app keeps mirror alive |
 | `FusionModeHelper` | LSUIElement App | Background, no Dock | (M4 stub) per-app NSWindow host for freeform/DeX |
 | `ContinueOnHelper` | LSUIElement App | Background, no Dock | (M5 stub) clipboard / URL handoff |
@@ -51,7 +51,7 @@ multiplexes transports.
 
 The three helpers are LSUIElement=true binaries; they run as accessory apps
 under the main App's bundle (`Contents/Helpers/`). The two extensions live
-under `Contents/PlugIns/`. All targets share the `group.com.droidmirroring.app.shared`
+under `Contents/PlugIns/`. All targets share the `group.io.github.vzts.aphonemirroring.shared`
 App Group container.
 
 ## SPM packages
@@ -188,7 +188,7 @@ The UI layer is `@MainActor`:
 their state is touched only from one detached receive task and the
 VideoToolbox callback queue, but Swift can't prove it.
 
-## App Group: `group.com.droidmirroring.app.shared`
+## App Group: `group.io.github.vzts.aphonemirroring.shared`
 
 Declared in every target's entitlements. Used for:
 - `FileProviderConfig` constants (`domainPrefix`, filtered filenames) live in

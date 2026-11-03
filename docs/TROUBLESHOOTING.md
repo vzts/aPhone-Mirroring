@@ -10,16 +10,16 @@ report state `.ready` but `browseResultsChangedHandler` never fires, even
 though `dns-sd -B _adb-tls-connect._tcp` from a terminal sees the device.
 
 **Cause:** One of:
-1. **Local Network permission** is denied for DroidMirroring. macOS prompts the first
+1. **Local Network permission** is denied for aPhone Mirroring. macOS prompts the first
    time `NWBrowser.start()` runs Bonjour; if the user dismissed it, the prompt
    never comes back. Reset via:
    ```sh
-   tccutil reset SystemPolicyAllFiles com.droidmirroring.app.DroidMirroring
-   tccutil reset SystemPolicyAllNetworkMonitor com.droidmirroring.app.DroidMirroring
+   tccutil reset SystemPolicyAllFiles io.github.vzts.aphonemirroring
+   tccutil reset SystemPolicyAllNetworkMonitor io.github.vzts.aphonemirroring
    ```
 2. **AP client isolation** on the Wi-Fi. Many guest / corporate APs block
    peer-to-peer mDNS. Move both Mac and phone onto a normal LAN.
-3. Wrong service type strings. The three DroidMirroring browses are case-sensitive
+3. Wrong service type strings. The three aPhone Mirroring browses are case-sensitive
    and must include the trailing `_tcp`. See
    `Packages/DeviceDiscovery/Sources/DeviceDiscovery/WirelessBrowser.swift`.
 
@@ -37,7 +37,7 @@ Caused by: java.lang.NumberFormatException: For input string: "fa1c08d0"
 **signed** 32-bit int — anything with the high bit set (≥ `0x80000000`) blows
 up.
 
-**Fix:** Generate scid as `UInt32.random(in: 0..<0x7FFF_FFFF)`. DroidMirroring does
+**Fix:** Generate scid as `UInt32.random(in: 0..<0x7FFF_FFFF)`. aPhone Mirroring does
 this in `ScrcpyServerLauncher.init`. If you change it, keep the high bit clear.
 
 ## Video metadata header looks like garbage
@@ -100,7 +100,7 @@ lands.
 
 ## App is completely silent under `nohup` / log file redirect
 
-**Symptom:** Running `nohup ./aPhone Mirroring.app/Contents/MacOS/DroidMirroring > /tmp/log 2>&1 &`
+**Symptom:** Running `nohup "./aPhone Mirroring.app/Contents/MacOS/aPhone Mirroring" > /tmp/aphonemirroring.log 2>&1 &`
 produces an empty log even though the App is clearly running.
 
 **Cause:** stdio is line-buffered (or fully buffered) by default; under a
@@ -112,8 +112,8 @@ crashes the buffer is lost.
 setvbuf(stdout, nil, _IONBF, 0)
 setvbuf(stderr, nil, _IONBF, 0)
 ```
-Done in `App/droidMirroringApp.swift` `init`, and in both smoke executables'
-`main`. Without it, `print(…)` calls don't appear in `/tmp/droidmirroring.log` until
+Done in `App/aPhoneMirroringApp.swift` `init`, and in both smoke executables'
+`main`. Without it, `print(…)` calls don't appear in `/tmp/aphonemirroring.log` until
 the process dies.
 
 ## adb server not running
@@ -121,7 +121,7 @@ the process dies.
 **Symptom:** Every `ADBClient` call throws `connection cancelled before ready`
 or "cannot connect to daemon".
 
-**Cause:** No `adb` server on `127.0.0.1:5037`. DroidMirroring expects the bundled
+**Cause:** No `adb` server on `127.0.0.1:5037`. aPhone Mirroring expects the bundled
 `adb` to have run `start-server` at least once per boot.
 
 **Fix:** `DeviceMonitor.bootstrapServer()` runs `adb start-server` as soon as

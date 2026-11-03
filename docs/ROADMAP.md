@@ -73,7 +73,7 @@ Sync protocol:
 In-app Files UI:
 - [x] `FilesViewModel` with breadcrumb, list, shortcuts (Pictures / DCIM / Downloads / …)
 - [x] `FilesWindow` NSWindowController + sortable Table
-- [x] Download to `~/Downloads/DroidMirroring/<serial>/`
+- [x] Download to `~/Downloads/aPhone Mirroring/<serial>/`
 - [x] Upload via drag-and-drop (files + folders)
 - [x] Folder-level batch download with per-file + per-batch progress and cancel
 - [x] Delete via `adb shell rm -rf`

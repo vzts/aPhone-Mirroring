@@ -2,7 +2,7 @@
 
 ## TL;DR
 
-macDros is a small project. Be respectful, assume good faith, focus on the
+aPhone Mirroring is a small project. Be respectful, assume good faith, focus on the
 code, and disagree without being a jerk. We aim for the same baseline of
 behaviour you'd expect from any professional engineering team.
 
@@ -36,11 +36,13 @@ Examples of behaviour that is not OK:
 
 This code applies in all project spaces — GitHub issues / PRs / discussions,
 commit messages, in any chat channel we might add later, and any one-off
-events. It also applies when an individual is representing macDros publicly.
+events. It also applies when an individual is representing aPhone Mirroring publicly.
 
 ## Enforcement
 
-If you see behaviour that breaks the above, email **matytan@outlook.com**.
+If you see behaviour that breaks the above, report it privately through this
+repository's [Report a vulnerability](https://github.com/vzts/aPhone-Mirroring/security/advisories/new)
+form, which only the maintainer can see.
 All reports are confidential. The maintainer will review and respond — most
 cases are best resolved with a private nudge; clear violations may result
 in a warning or a ban from project spaces.

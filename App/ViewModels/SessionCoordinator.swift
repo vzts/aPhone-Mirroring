@@ -10,7 +10,7 @@ import os
 
 private let log = Logger(subsystem: "io.github.vzts.aphonemirroring", category: "coordinator")
 
-/// Top-level glue between UI and engines. Owned by `DroidMirroringApp`.
+/// Top-level glue between UI and engines. Owned by `APhoneMirroringApp`.
 ///
 /// Per-device state machine:
 ///   1. User picks a device → `startMirror`

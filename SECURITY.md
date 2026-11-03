@@ -12,7 +12,9 @@
 
 **Please do not open a public GitHub issue for security bugs.**
 
-Email **matytan@outlook.com** with:
+Report it privately through GitHub:
+[Report a vulnerability](https://github.com/vzts/aPhone-Mirroring/security/advisories/new).
+Include:
 
 - A description of the issue
 - Steps to reproduce (commands, device, environment)
@@ -52,7 +54,7 @@ Surfaces explicitly **out of scope** for the bug-bounty intent:
 
 | Day | Action |
 |---|---|
-| 0 | You email us |
+| 0 | You report it |
 | 1-2 | We acknowledge |
 | ≤ 14 | We ship a fix in a release |
 | Fix + 7 | Public disclosure (you can name yourself, or stay anonymous) |

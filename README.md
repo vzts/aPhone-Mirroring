@@ -34,6 +34,8 @@ xcodegen generate
 open aPhoneMirroring.xcodeproj
 ```
 
+Building needs Xcode 26 or later (the macOS 26 SDK); the app runs on macOS 15 or later.
+
 ## Credits
 
 A fork of [droidMirroring-mac](https://github.com/matyle/droidMirroring-mac). Mirroring is powered by [scrcpy](https://github.com/Genymobile/scrcpy) and [adb](https://developer.android.com/tools/adb). Licensed under [Apache 2.0](LICENSE).

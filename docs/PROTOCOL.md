@@ -1,6 +1,6 @@
 # Wire protocols
 
-Every byte on the wire between DroidMirroring, the adb server, and the Android device
+Every byte on the wire between aPhone Mirroring, the adb server, and the Android device
 is documented below. Anything not here is either standard TCP or
 implementation-detail Swift.
 
@@ -148,7 +148,7 @@ Sequence implemented in `Packages/ScrcpyClient/Sources/ScrcpyClient/ScrcpyServer
 scid is the unique identifier scrcpy uses for its `localabstract:scrcpy_<scid>`
 socket and its internal logs. **It must fit in a Java signed `Integer`** —
 scrcpy-server parses it with `Integer.parseInt(s, 16)`, so the high bit must
-stay clear. DroidMirroring uses `UInt32.random(in: 0..<0x7FFF_FFFF)`. Setting the high
+stay clear. aPhone Mirroring uses `UInt32.random(in: 0..<0x7FFF_FFFF)`. Setting the high
 bit yields a `NumberFormatException` on the device and the session never
 starts.
 
@@ -249,7 +249,7 @@ Message types (see `Packages/ScrcpyClient/Sources/ScrcpyClient/ControlMessage.sw
 | `startApp` | 15 | nameLen(u8) + UTF-8 package |
 | `resetVideo` | 16 | — |
 
-Touch coordinates are in **device pixels**, not view pixels. DroidMirroring scales
+Touch coordinates are in **device pixels**, not view pixels. aPhone Mirroring scales
 NSEvent positions by the current video dimensions before sending. The
 `screenWidth/screenHeight` fields are how the server normalizes if your
 coordinate system disagrees with its current orientation.
@@ -301,11 +301,11 @@ Bonjour service types we browse (see
 
 ```
 1. user opens Wireless Debugging on the phone, taps "Pair device with pairing code"
-2. DroidMirroring sees a new _adb-tls-pairing endpoint via NWBrowser
-3. user types the 6-digit code into PairingSheet
-4. DroidMirroring: adb pair <host>:<port> <code>            (TLS + SPAKE2)
+2. aPhone Mirroring sees a new _adb-tls-pairing endpoint via NWBrowser
+3. user types the 6-digit code into the Connect window
+4. aPhone Mirroring: adb pair <host>:<port> <code>            (TLS + SPAKE2)
 5. phone now advertises _adb-tls-connect endpoint
-6. DroidMirroring: adb connect <host>:<port>                (TLS + cached key)
+6. aPhone Mirroring: adb connect <host>:<port>                (TLS + cached key)
 7. device appears in host:track-devices-l as wifi
 ```
 
@@ -326,15 +326,16 @@ WIFI:T:ADB;S:<service-name>;P:<password>;;
   `_adb-tls-pairing._tcp` once the QR is scanned.
 - `P:` is the pairing code (random 6 alphanumeric chars on phone-generated QRs).
 
-DroidMirroring does not yet generate QR codes — pairing-code entry only — but the
-parser is straightforward enough to add when needed.
+aPhone Mirroring pairs by QR by default: the Connect window shows a code with a
+random `aPhone-NNNN` service name and a 6-digit password, and pairs as soon as
+that name appears on `_adb-tls-pairing._tcp`.
 
 ---
 
 ## 8. Display selection (foldables)
 
 scrcpy mirrors a single `display_id`, but foldables expose multiple logical
-displays whose states change during fold/unfold animations. DroidMirroring calls
+displays whose states change during fold/unfold animations. aPhone Mirroring calls
 `adb shell dumpsys display` and parses `LogicalDisplay` blocks for size + state:
 
 ```

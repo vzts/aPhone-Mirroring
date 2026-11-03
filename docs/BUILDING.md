@@ -5,7 +5,7 @@
 | Tool | Version | Why |
 |---|---|---|
 | macOS | 15+ | `SWIFT_VERSION=6.0`, `deploymentTarget=15.0`, modern FileProvider APIs |
-| Xcode | 16+ | Swift 6 strict concurrency |
+| Xcode | 26+ | macOS 26 SDK (Liquid Glass); the app itself runs on macOS 15+ |
 | XcodeGen | latest | `.xcodeproj` is regenerated from `project.yml` |
 
 ```sh
@@ -18,7 +18,7 @@ build settings, or entitlements happens in `project.yml`.
 ## First-time setup
 
 ```sh
-cd /Users/matrix/.config/DroidMirroring
+cd aPhone-Mirroring   # the repository root
 
 # 1. Fetch scrcpy-server.jar + Google platform-tools adb into App/Resources/.
 #    Also resolves SwiftPM for every local package.

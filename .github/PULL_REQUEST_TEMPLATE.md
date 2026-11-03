@@ -5,7 +5,7 @@
 ## Test plan
 
 - [ ] `swift test` passes in every affected package
-- [ ] `xcodebuild -project DroidMirroring.xcodeproj -scheme DroidMirroring build` succeeds
+- [ ] `xcodegen generate && xcodebuild -project aPhoneMirroring.xcodeproj -scheme aPhoneMirroring build` succeeds
 - [ ] Verified on a real device — model + Android version:
 
 ## Screenshots / GIFs

@@ -1,5 +1,5 @@
 name: 🐛 Bug Report
-description: Report a bug or issue with DroidMirroring
+description: Report a bug or issue with aPhone Mirroring
 title: "[Bug] "
 labels: ["bug"]
 body:
@@ -36,8 +36,8 @@ body:
   - type: input
     id: app_version
     attributes:
-      label: DroidMirroring Version
-      description: Check via DroidMirroring → About, or the DMG filename
+      label: aPhone Mirroring Version
+      description: Check via aPhone Mirroring › About aPhone Mirroring, or the DMG filename
       placeholder: "e.g. v0.1.0"
     validations:
       required: true
@@ -77,8 +77,8 @@ body:
     attributes:
       label: Console Logs
       description: |
-        Open Console.app, search for `subsystem:com.droidmirroring.app`, then paste relevant logs.
-        Or run: `log show --predicate 'subsystem=="com.droidmirroring.app"' --last 10m`
+        Open Console.app, search for `subsystem:io.github.vzts.aphonemirroring`, then paste relevant logs.
+        Or run: `log show --predicate 'subsystem=="io.github.vzts.aphonemirroring"' --last 10m`
       render: shell
     validations:
       required: false
@@ -96,7 +96,7 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I have tried the latest version from [Releases](https://github.com/matyle/droidMirroring-mac/releases/latest)
+        - label: I have tried the latest version from [Releases](https://github.com/vzts/aPhone-Mirroring/releases/latest)
           required: true
         - label: I have included all relevant details above
           required: true
