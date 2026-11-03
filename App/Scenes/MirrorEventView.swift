@@ -238,6 +238,10 @@ final class MirrorEventView: NSView, NSTextInputClient {
     return n.contains("pinyin") || n.contains("wubi") || n.contains("cangjie") || n.contains("bopomofo") || n.contains("japanese") || n.contains("korean") || n.contains("简体") || n.contains("繁体") || n.contains("拼音") || n.contains("五笔") || n.contains("仓颉") || n.contains("注音") || n.contains("微信") || n.contains("搜狗") || n.contains("百度")
   }
   override func keyDown(with e: NSEvent) {
+    // ⌘ belongs to the Mac: its shortcuts are handled by the menus (the Edit
+    // menu's land below). Anything left would reach the phone as a Meta combo
+    // and set off an Android system shortcut — one opened Settings in testing.
+    if e.modifierFlags.contains(.command) { return }
     if uhidKeyboard?.handleKeyDown(with: e) == true { return }
     if let kc = MirrorKeyMap.androidKeycode(for: e) {
       if let m = markedText, m.length > 0 { let t = m.string; markedText = nil; isComposingIME = false; if let u = uhidKeyboard { for ch in t { if let hk = HIDKeyboard.hidKeycode(ascii: ch) { u.sendKey(hk) } } } else { controlSink?(.setClipboard(text: t, paste: true)) } }
@@ -256,5 +260,33 @@ final class MirrorEventView: NSView, NSTextInputClient {
     else if sel == #selector(cancelOperation(_:)) { unmarkText() }
     else if sel == #selector(insertText(_:replacementRange:)) || sel == Selector("paste:") {}
     else { super.doCommand(by: sel) }
+  }
+
+  // MARK: Edit menu — ⌘X / ⌘C / ⌘V / ⌘A / ⌘Z
+  // ⌘ never reaches the phone (see keyDown), and Android edits with Ctrl or its
+  // own clipboard keys, so the Mac's editing shortcuts are translated here.
+  // Until these existed the Edit menu was greyed out over a mirror.
+
+  @objc func paste(_ sender: Any?) {
+    // Settings › Share clipboard with phone: paste the Mac's clipboard as it is
+    // right now (the phone sets it, then pastes); otherwise the phone's own.
+    let shared = UserDefaults.standard.object(forKey: "mirror.clipboardSync") as? Bool ?? true
+    if shared, let text = NSPasteboard.general.string(forType: .string), !text.isEmpty {
+      controlSink?(.setClipboard(text: text, paste: true))
+    } else {
+      sendEditKey(279)  // KEYCODE_PASTE
+    }
+  }
+  @objc func copy(_ sender: Any?) { sendEditKey(278) }  // KEYCODE_COPY; the clipboard bridge brings it back
+  @objc func cut(_ sender: Any?) { sendEditKey(277) }   // KEYCODE_CUT
+  override func selectAll(_ sender: Any?) { sendEditKey(29, meta: MirrorKeyMap.Meta.ctrl.rawValue) }  // Ctrl+A
+  @objc func undo(_ sender: Any?) { sendEditKey(54, meta: MirrorKeyMap.Meta.ctrl.rawValue) }       // Ctrl+Z
+  @objc func redo(_ sender: Any?) {
+    sendEditKey(54, meta: MirrorKeyMap.Meta.ctrl.rawValue | MirrorKeyMap.Meta.shift.rawValue)       // Ctrl+Shift+Z
+  }
+
+  private func sendEditKey(_ keycode: Int32, meta: UInt32 = 0) {
+    controlSink?(.keycode(keycode, action: .down, metaState: meta))
+    controlSink?(.keycode(keycode, action: .up, metaState: meta))
   }
 }

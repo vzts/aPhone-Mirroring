@@ -81,6 +81,6 @@ final class UHIDKeyboardManager {
 
   func handleFlagsChanged(with e: NSEvent) { sync(e); flush() }
 
-  private func sync(_ e: NSEvent) { var m: UInt8 = 0; let f = e.modifierFlags; if f.contains(.control) { m |= 0x01 }; if f.contains(.shift) { m |= 0x02 }; if f.contains(.option) { m |= 0x04 }; if f.contains(.command) { m |= 0x08 }; activeModifiers = m }
+  private func sync(_ e: NSEvent) { var m: UInt8 = 0; let f = e.modifierFlags; if f.contains(.control) { m |= 0x01 }; if f.contains(.shift) { m |= 0x02 }; if f.contains(.option) { m |= 0x04 }; activeModifiers = m }  // ⌘ stays on the Mac (see MirrorEventView.keyDown)
   private func flush() { sink(ControlMessage.uhidInput(id: deviceId, data: HIDKeyboard.makeReport(modifiers: activeModifiers, keycodes: pressedKeys))) }
 }
