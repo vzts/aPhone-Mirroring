@@ -1,6 +1,26 @@
 # Changelog
 
-All notable changes to DroidMirroring will be documented in this file.
+All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
+
+## [v2.0.0] - 2026-11-03
+
+### Changed
+- Renamed to aPhone Mirroring, with a new icon.
+- Redesigned interface: one phone-shaped window from connecting to mirroring,
+  QR pairing by default, One UI-style navigation buttons, native menus, and
+  System Settings-style preferences that apply right away.
+- scrcpy-server 5.0.1 (Android 16 and Samsung fixes).
+- Default bitrate 8 Mbps; falls back to H.264 when HEVC won't start.
+
+### Added
+- 11 languages, following the system language or chosen in Settings.
+- Phone screen on/off and screenshot buttons in the title bar; screenshots
+  go to the Desktop.
+- The phone stays awake while mirroring, so Wi-Fi mirroring doesn't drop.
+
+### Fixed
+- Mirror windows keep their size and place across reconnects.
+- Pairing in the app now leads straight into mirroring.
 
 ## [v1.4.2] - 2026-06-30
 
