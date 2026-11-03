@@ -2,6 +2,19 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.0.1] - 2026-11-03
+
+### Changed
+- Record and Rotate are now title-bar buttons next to Screenshot.
+- Back / Home / Recents are hidden by default; show them from More or the
+  View menu.
+- New shortcuts: Cmd-R rotates the screen, Cmd-D turns the phone screen on
+  or off (Refresh Active Display moved to Opt-Cmd-R). Tooltips show each
+  button's shortcut.
+
+### Fixed
+- Changing the language in Settings now offers a restart and applies.
+
 ## [v2.0.0] - 2026-11-03
 
 ### Changed
