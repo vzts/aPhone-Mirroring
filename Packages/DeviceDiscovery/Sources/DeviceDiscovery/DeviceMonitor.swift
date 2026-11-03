@@ -14,7 +14,7 @@ public final class DeviceMonitor: ObservableObject {
   /// Per-serial cache of SDK/manufacturer/model gathered via `getprop`. Skip
   /// re-querying every time host:track-devices pings us; props are static for
   /// the device's session.
-  private var propsCache: [String: (sdk: Int, manufacturer: String)] = [:]
+  private var propsCache: [String: (sdk: Int, manufacturer: String, model: String, name: String)] = [:]
 
   public init(adb: ADBClient = ADBClient(), adbBinary: URL? = nil) {
     self.adb = adb
@@ -109,11 +109,13 @@ public final class DeviceMonitor: ObservableObject {
         var d = device
         d.androidSDK = cached.sdk
         d.manufacturer = cached.manufacturer
+        if !cached.model.isEmpty { d.model = cached.model }
+        d.name = cached.name
         result.append(d)
         continue
       }
       let props = (try? await adb.shell(
-        "getprop ro.build.version.sdk; getprop ro.product.manufacturer",
+        "getprop ro.build.version.sdk; getprop ro.product.manufacturer; getprop ro.product.model; settings get global device_name",
         serial: device.id
       )) ?? ""
       let lines = props.split(separator: "\n").map {
@@ -121,12 +123,16 @@ public final class DeviceMonitor: ObservableObject {
       }
       let sdk = lines.first.flatMap { Int($0) } ?? 0
       let manufacturer = lines.count > 1 ? lines[1] : ""
+      let model = lines.count > 2 ? lines[2] : ""
+      let name = lines.count > 3 && lines[3] != "null" ? lines[3] : ""
       var d = device
       d.androidSDK = sdk
       d.manufacturer = manufacturer
+      if !model.isEmpty { d.model = model }
+      d.name = name
       if sdk > 0 {
         await MainActor.run {
-          self.propsCache[device.id] = (sdk: sdk, manufacturer: manufacturer)
+          self.propsCache[device.id] = (sdk: sdk, manufacturer: manufacturer, model: model, name: name)
         }
       }
       result.append(d)
