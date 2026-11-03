@@ -12,6 +12,7 @@ public actor ADBWirelessClient {
     case pairingInvalidCode       // wrong 6-digit code
     case pairingSwitchFailed      // device rejected the pairing
     case connectUnverified        // device known but key not trusted
+    case unreachable              // nothing answered at that ip:port
     case addressInvalid(String)   // malformed ip:port
     case adbMissing               // bundled adb not found
     case adb(stderr: String)      // anything else from adb
@@ -125,8 +126,11 @@ public actor ADBWirelessClient {
     if text.contains("not authorized") || text.contains("unverified") || text.contains("not trusted") {
       return .connectUnverified
     }
+    // No pairing happens on this path, so a pairing timeout would send people
+    // to the wrong screen. The usual cause is a stale port: it changes every
+    // time wireless debugging restarts.
     if text.contains("connection refused") || text.contains("no route") || text.contains("timeout") {
-      return .pairingTimeout
+      return .unreachable
     }
     return .adb(stderr: text)
   }

@@ -29,6 +29,7 @@
 "Connected. Starting Mirror…" = "已连接。正在开始镜像…";
 "Connecting…" = "正在连接…";
 "Connection" = "连接";
+"Couldn't reach the phone — check the IP address and port on its Wireless debugging screen." = "无法连接到手机 — 请在手机的“无线调试”界面核对 IP 地址和端口。";
 "Couldn't start mirroring" = "无法开始镜像";
 "Delete" = "删除";
 "Desktop Mode…" = "桌面模式…";

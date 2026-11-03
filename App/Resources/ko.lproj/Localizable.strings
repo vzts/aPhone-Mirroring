@@ -29,6 +29,7 @@
 "Connected. Starting Mirror…" = "연결됨. 미러링을 시작합니다…";
 "Connecting…" = "연결 중…";
 "Connection" = "연결";
+"Couldn't reach the phone — check the IP address and port on its Wireless debugging screen." = "휴대폰에 연결할 수 없습니다 — 휴대폰의 무선 디버깅 화면에서 IP 주소와 포트를 확인하세요.";
 "Couldn't start mirroring" = "미러링을 시작하지 못했습니다";
 "Delete" = "삭제";
 "Desktop Mode…" = "데스크톱 모드…";

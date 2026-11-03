@@ -29,6 +29,7 @@
 "Connected. Starting Mirror…" = "Connected. Starting Mirror…";
 "Connecting…" = "Connecting…";
 "Connection" = "Connection";
+"Couldn't reach the phone — check the IP address and port on its Wireless debugging screen." = "Couldn't reach the phone — check the IP address and port on its Wireless debugging screen.";
 "Couldn't start mirroring" = "Couldn't start mirroring";
 "Delete" = "Delete";
 "Desktop Mode…" = "Desktop Mode…";

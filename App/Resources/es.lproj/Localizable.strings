@@ -29,6 +29,7 @@
 "Connected. Starting Mirror…" = "Conectado. Iniciando la duplicación…";
 "Connecting…" = "Conectando…";
 "Connection" = "Conexión";
+"Couldn't reach the phone — check the IP address and port on its Wireless debugging screen." = "No se pudo conectar con el teléfono: comprueba la dirección IP y el puerto en su pantalla de Depuración inalámbrica.";
 "Couldn't start mirroring" = "No se pudo iniciar la duplicación";
 "Delete" = "Eliminar";
 "Desktop Mode…" = "Modo escritorio…";

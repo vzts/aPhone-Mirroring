@@ -29,6 +29,7 @@
 "Connected. Starting Mirror…" = "Подключено. Запуск видеоповтора…";
 "Connecting…" = "Подключение…";
 "Connection" = "Подключение";
+"Couldn't reach the phone — check the IP address and port on its Wireless debugging screen." = "Не удалось подключиться к телефону — проверьте IP-адрес и порт на экране «Отладка по Wi-Fi».";
 "Couldn't start mirroring" = "Не удалось запустить видеоповтор";
 "Delete" = "Удалить";
 "Desktop Mode…" = "Режим рабочего стола…";

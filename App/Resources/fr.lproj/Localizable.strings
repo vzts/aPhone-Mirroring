@@ -29,6 +29,7 @@
 "Connected. Starting Mirror…" = "Connecté. Lancement de la recopie…";
 "Connecting…" = "Connexion…";
 "Connection" = "Connexion";
+"Couldn't reach the phone — check the IP address and port on its Wireless debugging screen." = "Impossible de joindre le téléphone — vérifiez l’adresse IP et le port sur son écran Débogage sans fil.";
 "Couldn't start mirroring" = "Impossible de lancer la recopie";
 "Delete" = "Supprimer";
 "Desktop Mode…" = "Mode bureau…";

@@ -150,6 +150,7 @@ final class PairingModel: ObservableObject {
     case .pairingInvalidCode: return String(localized: "Wrong pairing code — try again.")
     case .pairingSwitchFailed: return String(localized: "Device rejected the pairing.")
     case .connectUnverified: return String(localized: "Device is not authorized — accept the prompt on Android.")
+    case .unreachable: return String(localized: "Couldn't reach the phone — check the IP address and port on its Wireless debugging screen.")
     case .addressInvalid(let s): return String(localized: "Invalid address: \(s)")
     case .adbMissing: return String(localized: "Bundled adb is missing — reinstall \(AppInfo.name).")
     case .adb(let s): return s.isEmpty ? String(localized: "adb returned an unknown error.") : s
