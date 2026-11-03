@@ -25,6 +25,7 @@ settings:
     KNOWN_REGIONS:
       - zh-Hans
       - en
+      - ko
 
 packages:
   ADBKit:          { path: Packages/ADBKit }
