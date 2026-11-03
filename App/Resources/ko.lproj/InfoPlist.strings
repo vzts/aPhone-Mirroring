@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "aPhone 미러링";
+"CFBundleName" = "aPhone 미러링";
+"NSLocalNetworkUsageDescription" = "aPhone 미러링은 로컬 네트워크에서 휴대폰을 찾아 Wi-Fi로 연결합니다.";

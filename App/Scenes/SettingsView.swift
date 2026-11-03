@@ -51,7 +51,7 @@ private struct GeneralSettings: View {
           LabeledContent {
             Button("Open Login Items…") { SMAppService.openSystemSettingsLoginItems() }
           } label: {
-            Text("Allow Droid Mirroring in Login Items to finish turning this on.")
+            Text("Allow \(AppInfo.name) in Login Items to finish turning this on.")
               .foregroundStyle(.secondary)
           }
         }
@@ -62,7 +62,7 @@ private struct GeneralSettings: View {
       } header: {
         Text("Startup")
       } footer: {
-        Text("With the menu bar icon hidden, click Droid Mirroring in the Dock to reach your phones.")
+        Text("With the menu bar icon hidden, click \(AppInfo.name) in the Dock to reach your phones.")
       }
 
       Section {
@@ -72,10 +72,40 @@ private struct GeneralSettings: View {
       } footer: {
         Text("Phones you've mirrored before open on their own as soon as they connect.")
       }
+
+      LanguageSection()
     }
     .formStyle(.grouped)
     .modifier(SettingsPane())
     .onAppear { loginStatus = SMAppService.mainApp.status }
+  }
+}
+
+/// Follows the system by default; a choice here overrides it for this app only.
+private struct LanguageSection: View {
+  @State private var selection = AppLanguage.override ?? ""
+  private let launched = AppLanguage.override ?? ""
+
+  var body: some View {
+    Section {
+      Picker("Language", selection: $selection) {
+        Text("System Default").tag("")
+        ForEach(AppLanguage.supported, id: \.code) { language in
+          Text(verbatim: language.name).tag(language.code)
+        }
+      }
+      .onChange(of: selection) { _, code in AppLanguage.override = code.isEmpty ? nil : code }
+      if selection != launched {
+        LabeledContent {
+          Button("Restart Now") { AppLanguage.relaunch() }
+        } label: {
+          Text("Restart \(AppInfo.name) to use the new language.")
+            .foregroundStyle(.secondary)
+        }
+      }
+    } header: {
+      Text("Language")
+    }
   }
 }
 

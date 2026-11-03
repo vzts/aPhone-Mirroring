@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "Recopie de l’aPhone";
+"CFBundleName" = "Recopie de l’aPhone";
+"NSLocalNetworkUsageDescription" = "Recopie de l’aPhone utilise le réseau local pour trouver votre téléphone et s’y connecter en Wi-Fi.";

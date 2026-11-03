@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "Espelhamento do aPhone";
+"CFBundleName" = "Espelhamento do aPhone";
+"NSLocalNetworkUsageDescription" = "O Espelhamento do aPhone usa a rede local para encontrar seu telefone e se conectar a ele pelo Wi-Fi.";

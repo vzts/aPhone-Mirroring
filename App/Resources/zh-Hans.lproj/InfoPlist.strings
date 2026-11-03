@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "aPhone 镜像";
+"CFBundleName" = "aPhone 镜像";
+"NSLocalNetworkUsageDescription" = "aPhone 镜像使用本地网络查找你的手机并通过 Wi-Fi 连接。";

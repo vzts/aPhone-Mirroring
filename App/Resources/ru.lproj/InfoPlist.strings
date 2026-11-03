@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "Видеоповтор aPhone";
+"CFBundleName" = "Видеоповтор aPhone";
+"NSLocalNetworkUsageDescription" = "Видеоповтор aPhone использует локальную сеть, чтобы найти телефон и подключиться к нему по Wi-Fi.";

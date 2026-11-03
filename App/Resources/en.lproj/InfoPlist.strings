@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "aPhone Mirroring";
+"CFBundleName" = "aPhone Mirroring";
+"NSLocalNetworkUsageDescription" = "aPhone Mirroring uses the local network to find your phone and connect to it over Wi-Fi.";

@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "Duplicación del aPhone";
+"CFBundleName" = "Duplicación del aPhone";
+"NSLocalNetworkUsageDescription" = "Duplicación del aPhone usa la red local para encontrar tu teléfono y conectarse a él por Wi-Fi.";

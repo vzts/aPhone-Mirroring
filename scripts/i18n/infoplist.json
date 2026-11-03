@@ -1,0 +1,13 @@
+{
+  "en":      ["aPhone Mirroring", "aPhone Mirroring uses the local network to find your phone and connect to it over Wi-Fi."],
+  "ko":      ["aPhone 미러링", "aPhone 미러링은 로컬 네트워크에서 휴대폰을 찾아 Wi-Fi로 연결합니다."],
+  "ja":      ["aPhoneミラーリング", "aPhoneミラーリングは、ローカルネットワーク上のスマートフォンを見つけて Wi-Fi で接続するために使用します。"],
+  "zh-Hans": ["aPhone 镜像", "aPhone 镜像使用本地网络查找你的手机并通过 Wi-Fi 连接。"],
+  "zh-Hant": ["aPhone 鏡像輸出", "aPhone 鏡像輸出會使用區域網路尋找你的手機並透過 Wi-Fi 連線。"],
+  "es":      ["Duplicación del aPhone", "Duplicación del aPhone usa la red local para encontrar tu teléfono y conectarse a él por Wi-Fi."],
+  "fr":      ["Recopie de l’aPhone", "Recopie de l’aPhone utilise le réseau local pour trouver votre téléphone et s’y connecter en Wi-Fi."],
+  "de":      ["aPhone-Synchronisierung", "aPhone-Synchronisierung verwendet das lokale Netzwerk, um dein Telefon zu finden und sich per WLAN zu verbinden."],
+  "pt-BR":   ["Espelhamento do aPhone", "O Espelhamento do aPhone usa a rede local para encontrar seu telefone e se conectar a ele pelo Wi-Fi."],
+  "ru":      ["Видеоповтор aPhone", "Видеоповтор aPhone использует локальную сеть, чтобы найти телефон и подключиться к нему по Wi-Fi."],
+  "it":      ["Duplicazione aPhone", "Duplicazione aPhone usa la rete locale per trovare il telefono e connettersi via Wi-Fi."]
+}

@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "aPhoneミラーリング";
+"CFBundleName" = "aPhoneミラーリング";
+"NSLocalNetworkUsageDescription" = "aPhoneミラーリングは、ローカルネットワーク上のスマートフォンを見つけて Wi-Fi で接続するために使用します。";

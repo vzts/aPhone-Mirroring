@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "aPhone-Synchronisierung";
+"CFBundleName" = "aPhone-Synchronisierung";
+"NSLocalNetworkUsageDescription" = "aPhone-Synchronisierung verwendet das lokale Netzwerk, um dein Telefon zu finden und sich per WLAN zu verbinden.";
