@@ -2,6 +2,19 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.0.3] - 2026-11-03
+
+### Fixed
+- A phone connected more than one way (USB and Wi-Fi, or by IP address and
+  over wireless debugging) is listed and mirrored once instead of once per
+  connection.
+- Dragging a window in Desktop Mode no longer throws it past where you let go.
+- After pairing, the Connect window says what actually happens: a phone that's
+  already mirrored is brought forward, a closed mirror opens again, and it no
+  longer promises a mirror when "Start mirroring when a phone connects" is off.
+- Connecting by IP address to a port that's no longer open now says the phone
+  can't be reached, instead of asking you to keep a pairing screen open.
+
 ## [v2.0.2] - 2026-11-03
 
 ### Fixed
