@@ -168,7 +168,7 @@ private struct MirrorSettings: View {
     .formStyle(.grouped)
     .modifier(SettingsPane())
     // Everything here applies to open mirror windows right away.
-    .onChange(of: codec) { SessionCoordinator.shared.mirrorLaunchSettingsChanged() }
+    .onChange(of: codec) { SessionCoordinator.shared.codecSettingChanged() }
     .onChange(of: maxFps) { SessionCoordinator.shared.mirrorLaunchSettingsChanged() }
     .onChange(of: bitrate) { SessionCoordinator.shared.mirrorLaunchSettingsChanged() }
     .onChange(of: audioOutput) { SessionCoordinator.shared.mirrorLaunchSettingsChanged(refreshAudio: true) }

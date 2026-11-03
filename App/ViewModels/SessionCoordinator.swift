@@ -232,18 +232,11 @@ final class SessionCoordinator: ObservableObject {
       height: pick?.height ?? 0,
       rotation: pick?.rotation ?? 0
     )
-    var controller: MirrorWindowController?
     do {
       let c = try makeMirrorWindow(for: device)
-      controller = c
-      try await launchSession(for: device, displayId: displayId, into: c)
+      try await launchWithFallbacks(for: device, displayId: displayId, into: c)
       startActiveDisplayPolling(for: device)
     } catch {
-      // ── Audio fallback ──────────────────────────────────────────────
-      // If the device has no audio HAL (e.g. ZTE F50), scrcpy-server may
-      // either (a) time out on the audio socket → audioUnavailable, or
-      // (b) crash entirely → scrcpyProtocol / short read.  In both cases
-      // retry with audio disabled so the user at least gets video.
       let isAudioError: Bool = {
         if case DroidMirroringError.audioUnavailable = error { return true }
         return false
@@ -252,33 +245,6 @@ final class SessionCoordinator: ObservableObject {
         if case DroidMirroringError.scrcpyProtocol = error { return true }
         return false
       }()
-      if (isAudioError || isScrcpyError), let c = controller {
-        let reason = isAudioError ? "audio unavailable" : "scrcpy protocol error"
-        log.warning("\(reason) for \(device.id): \(error.localizedDescription, privacy: .public) — retrying without audio")
-        // Clean up the failed server process + reverse forward before retrying.
-        await c.session.stop()
-        do {
-          try await launchSession(for: device, displayId: displayId, into: c, audioEnabled: false)
-          startActiveDisplayPolling(for: device)
-          log.notice("mirror started without audio for \(device.id)")
-          return
-        } catch {
-          log.error("audio-disabled retry also failed for \(device.id): \(error)")
-        }
-        // Some phones' HEVC / AV1 encoders don't start at all; H.264 works on
-        // every Android device, so give it one last try before giving up.
-        if (UserDefaults.standard.string(forKey: "mirror.codec") ?? "h265") != "h264" {
-          await c.session.stop()
-          do {
-            try await launchSession(for: device, displayId: displayId, into: c, audioEnabled: false, codecOverride: "h264")
-            startActiveDisplayPolling(for: device)
-            log.notice("mirror started with H.264 fallback for \(device.id)")
-            return
-          } catch {
-            log.error("H.264 fallback also failed for \(device.id): \(error)")
-          }
-        }
-      }
 
       // If launch failed due to a bad display_id, clear the cache and retry with display 0.
       // Skip this if we already retried above (audio / scrcpy error).
@@ -304,12 +270,24 @@ final class SessionCoordinator: ObservableObject {
       let detailMsg = String(localized: "If this keeps happening, open Settings › Advanced, choose Remove Leftover Mirroring Files, then reconnect the phone.")
         + "\n\n\(name) · \(androidVersionName(sdk: device.androidSDK)) · \(device.transport.rawValue)\n\(error.localizedDescription)"
       mirrorWindows.removeValue(forKey: device.id)?.close()
+      syncConnectWindow()
+      // The phone dropped off mid-launch (Wi-Fi blip): nothing to report —
+      // the Connect window shows it, and Mirror reopens when it's back.
+      guard lastOnlineSerials.contains(device.id) else {
+        log.notice("launch failed because \(device.id) went away — waiting for it to return")
+        return
+      }
       let alert = NSAlert()
       alert.messageText = String(localized: "Couldn't start mirroring")
       alert.informativeText = detailMsg
       alert.addButton(withTitle: String(localized: "OK"))
-      alert.runModal()
-      syncConnectWindow()
+      // A sheet, not runModal: a modal loop would stall auto-mirroring and
+      // every other phone until someone clicks OK.
+      if let window = connectController?.window, window.isVisible {
+        alert.beginSheetModal(for: window, completionHandler: nil)
+      } else {
+        alert.runModal()
+      }
     }
   }
 
@@ -553,6 +531,54 @@ final class SessionCoordinator: ObservableObject {
 
   private static let keepAwakeScreenOffTimeoutMs = 30 * 60 * 1000
 
+  /// Codec a phone fell back to; kept until the codec setting changes so
+  /// relaunches (rotation, settings) don't sit through the failing tries.
+  private var fallbackCodec: [String: String] = [:]
+
+  /// Launch, stepping down until something works: without audio (phones with
+  /// no audio HAL), then H.264 (encoders that won't start). Used by every
+  /// launch path — first start, settings restart, display change.
+  private func launchWithFallbacks(for device: Device, displayId: Int, into controller: MirrorWindowController) async throws {
+    let userCodec = UserDefaults.standard.string(forKey: "mirror.codec") ?? "h265"
+    var steps: [(audio: Bool, codec: String?)]
+    if let remembered = fallbackCodec[device.id] {
+      steps = [(true, remembered), (false, remembered)]
+    } else {
+      steps = [(true, nil), (false, nil)]
+      if userCodec != "h264" { steps.append((false, "h264")) }
+    }
+    var lastError: Error?
+    for (index, step) in steps.enumerated() {
+      if index > 0 { await controller.session.stop() }
+      do {
+        try await launchSession(for: device, displayId: displayId, into: controller,
+                                audioEnabled: step.audio, codecOverride: step.codec)
+        if let codec = step.codec, codec != userCodec, fallbackCodec[device.id] == nil {
+          fallbackCodec[device.id] = codec
+          log.notice("\(device.id) mirrors with \(codec) (fallback)")
+        }
+        return
+      } catch {
+        lastError = error
+        log.warning("launch step \(index) (audio=\(step.audio), codec=\(step.codec ?? userCodec)) failed for \(device.id): \(error.localizedDescription, privacy: .public)")
+        let retryable: Bool = {
+          switch error as? DroidMirroringError {
+          case .audioUnavailable, .scrcpyProtocol: return true
+          default: return false
+          }
+        }()
+        if !retryable || !lastOnlineSerials.contains(device.id) { break }
+      }
+    }
+    throw lastError ?? DroidMirroringError.scrcpyProtocol("launch failed")
+  }
+
+  /// Settings › Codec changed: forget fallbacks and restart with the new one.
+  func codecSettingChanged() {
+    fallbackCodec.removeAll()
+    mirrorLaunchSettingsChanged()
+  }
+
   /// scrcpy-server records the current `screen_off_timeout` and its CleanUp
   /// process restores it when the server dies. On a relaunch the previous
   /// server's value can still be in place (its CleanUp hasn't run yet, or was
@@ -591,15 +617,16 @@ final class SessionCoordinator: ObservableObject {
     await controller.session.stop()
 
     do {
-      try await launchSession(for: device, displayId: displayId, into: controller)
+      try await launchWithFallbacks(for: device, displayId: displayId, into: controller)
       startActiveDisplayPolling(for: device)
       log.notice("session restarted for \(serial)")
     } catch {
-      log.error("restart failed for \(serial): \(error)")
+      log.error("restart failed for \(serial): \(error.localizedDescription, privacy: .public)")
       controller.isRestarting = false
       mirrorWindows.removeValue(forKey: serial)
       activePanel.removeValue(forKey: serial)
       controller.close()
+      syncConnectWindow()
     }
   }
 
@@ -661,7 +688,7 @@ final class SessionCoordinator: ObservableObject {
     activePanel[device.id] = (id: pick.id, width: pick.width, height: pick.height, rotation: pick.rotation)
     await controller.session.stop()
     do {
-      try await launchSession(for: device, displayId: pick.id, into: controller)
+      try await launchWithFallbacks(for: device, displayId: pick.id, into: controller)
       log.notice("relaunch OK id=\(pick.id) \(pick.width)x\(pick.height)")
     } catch {
       log.error("relaunch failed: \(error)")
