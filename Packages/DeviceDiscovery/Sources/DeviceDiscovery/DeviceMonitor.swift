@@ -88,7 +88,9 @@ public final class DeviceMonitor: ObservableObject {
     let online = await MainActor.run { self.devices.filter { $0.state == .online } }
     for device in online {
       _ = try? await adb.shell(
-        "pkill -f 'scrcpy.Server' || true; pkill -f 'scrcpy.CleanUp' || true",
+        // Leave scrcpy.CleanUp alone: it exits on its own once the server
+        // dies, after restoring device settings (screen_off_timeout).
+        "pkill -f 'scrcpy.Server' || true",
         serial: device.id
       )
     }
