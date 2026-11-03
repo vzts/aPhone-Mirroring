@@ -149,6 +149,11 @@ final class MirrorWindowController: NSWindowController {
         MainActor.assumeIsolated { self?.saveWindowFrame() }
       }
     }
+    // The red button closes the NSWindow without calling this controller's
+    // close(), so the session has to be torn down from the notification.
+    NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
+      MainActor.assumeIsolated { self?.tearDown() }
+    }
 
     // iPhone-Mirroring-style title bar: traffic lights on the left, Android
     // navigation on the right, both revealed when the pointer nears the top.
@@ -214,6 +219,17 @@ final class MirrorWindowController: NSWindowController {
   required init?(coder: NSCoder) { fatalError() }
 
   override func close() {
+    tearDown()
+    super.close()
+  }
+
+  private var didTearDown = false
+
+  /// Stops the session and restores the phone. Runs once, however the window
+  /// closes: programmatically through close() or with the red button.
+  private func tearDown() {
+    guard !didTearDown else { return }
+    didTearDown = true
     uhidKeyboard?.destroy(); uhidKeyboard = nil
     screenStatePoller?.invalidate()
     screenStatePoller = nil
@@ -246,7 +262,6 @@ final class MirrorWindowController: NSWindowController {
       }
       await session.stop()
     }
-    super.close()
   }
 
   // MARK: bind
@@ -554,15 +569,20 @@ final class MirrorWindowController: NSWindowController {
   }
 
   @objc func openFiles() {
-    guard let serial = deviceSerial else { return }
-    let device = Device(id: serial, model: session.deviceName, state: .online)
+    guard let device = currentDevice else { return }
     SessionCoordinator.shared.openFiles(for: device)
   }
 
   @objc func openDesktop() {
-    guard let serial = deviceSerial else { return }
-    let device = Device(id: serial, model: session.deviceName, androidSDK: 34, state: .online)
+    guard let device = currentDevice else { return }
     Task { await SessionCoordinator.shared.openDesktop(for: device) }
+  }
+
+  /// The monitor's entry carries the phone's own name; the stream only knows the model.
+  private var currentDevice: Device? {
+    guard let serial = deviceSerial else { return nil }
+    return SessionCoordinator.shared.monitor?.devices.first { $0.id == serial }
+      ?? Device(id: serial, model: session.deviceName, androidSDK: 34, state: .online)
   }
 
   private func sendKey(action: KeyEventAction, code: Int32) {

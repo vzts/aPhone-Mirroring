@@ -53,6 +53,9 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
 
     window.center()
     super.init(window: window)
+    NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
+      MainActor.assumeIsolated { self?.tearDown() }
+    }
 
     let toolbar = NSToolbar(identifier: "io.github.vzts.aphonemirroring.fusion.toolbar")
     toolbar.delegate = self
@@ -71,6 +74,16 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
   required init?(coder: NSCoder) { fatalError() }
 
   override func close() {
+    tearDown()
+    super.close()
+  }
+
+  private var didTearDown = false
+
+  /// Runs once, however the window closes: the red button skips close().
+  private func tearDown() {
+    guard !didTearDown else { return }
+    didTearDown = true
     Task {
       if recorder.isRecording {
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
@@ -81,7 +94,6 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
         await fusion.mirrorSession.stop()
       }
     }
-    super.close()
   }
 
   func attach(_ session: FusionSession) async {
