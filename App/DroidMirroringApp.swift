@@ -13,63 +13,32 @@ struct DroidMirroringApp: App {
   }
 
   @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-
-  /// App version string from Info.plist
-  private var appVersion: String {
-    Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
-  }
+  @AppStorage("showMenuBarIcon") private var showMenuBarIcon = true
 
   var body: some Scene {
-    // No main window. Mirror is THE product, opened automatically when a
-    // device shows up. Everything else flows through the menu bar.
-
-    MenuBarExtra("macDros", systemImage: "iphone.gen3") {
+    // No main window: the phone-shaped Connect / Mirror windows are the app.
+    // Everything else lives in the menu bar extra, the Device menu, and Settings.
+    MenuBarExtra("Droid Mirroring", systemImage: "iphone.gen3", isInserted: $showMenuBarIcon) {
       MenuBarContent()
         .environmentObject(appDelegate.monitor)
     }
     .menuBarExtraStyle(.window)
     .commands {
       CommandGroup(replacing: .newItem) {}
-      CommandGroup(after: .toolbar) {
-        Button("Refresh Active Display") {
-          guard let win = NSApp.keyWindow,
-                let controller = win.windowController as? MirrorWindowController,
-                let serial = controller.deviceSerial
-          else { return }
-          let monitor = appDelegate.monitor
-          Task {
-            let device = monitor.devices.first(where: { $0.id == serial })
-              ?? Device(id: serial, state: .online)
-            await SessionCoordinator.shared.refreshActiveDisplay(for: device)
-          }
-        }
-        .keyboardShortcut("r", modifiers: [.command])
-      }
-
-      // About menu
       CommandGroup(after: .appInfo) {
         Button("Check for Updates…") {
           NSWorkspace.shared.open(URL(string: "https://github.com/matyle/droidMirroring-mac/releases/latest")!)
         }
-        Divider()
+      }
+      CommandMenu("Device") {
+        DeviceCommands()
+      }
+      CommandGroup(replacing: .help) {
         Button("Official Website") {
-          if let url = URL(string: "https://droidmirroring.pages.dev") {
-            NSWorkspace.shared.open(url)
-          }
+          NSWorkspace.shared.open(URL(string: "https://droidmirroring.pages.dev")!)
         }
         Button("GitHub Repository") {
-          if let url = URL(string: "https://github.com/matyle/droidMirroring-mac") {
-            NSWorkspace.shared.open(url)
-          }
-        }
-        Divider()
-        Button("DroidMirroring \(appVersion)") {
-          NSApp.orderFrontStandardAboutPanel(options: [
-            NSApplication.AboutPanelOptionKey.applicationIcon: NSApp.applicationIconImage as Any,
-            NSApplication.AboutPanelOptionKey.applicationName: "DroidMirroring",
-            NSApplication.AboutPanelOptionKey.applicationVersion: appVersion,
-            NSApplication.AboutPanelOptionKey.version: "Built with Swift 6",
-          ])
+          NSWorkspace.shared.open(URL(string: "https://github.com/matyle/droidMirroring-mac")!)
         }
       }
     }
@@ -77,26 +46,57 @@ struct DroidMirroringApp: App {
     Settings {
       SettingsView()
         .environmentObject(appDelegate.monitor)
-        .frame(width: 520, height: 420)
     }
-
-    // Pairing UI lives in a Window so it can be summoned by id from the
-    // menu bar or the Dock-icon-reopen handler. Suppressed on launch so a
-    // first run doesn't pop unexpected chrome — discovered devices land in
-    // Mirror first.
-    Window("Pair a wireless device", id: WindowID.pairing) {
-      PairingWindow(wireless: ResourceLocator.wirelessClient())
-        .frame(minWidth: 560, minHeight: 420)
-    }
-    .windowResizability(.contentSize)
-    .defaultLaunchBehavior(.suppressed)
   }
 }
 
-/// Window identifiers kept centralised — SwiftUI's `Window` id matching is
-/// string-based and easy to drift out of sync with imperative open/close code.
-enum WindowID {
-  static let pairing = "droidmirroring.pairing"
+/// Opens Settings from AppKit code (the More menu), optionally on a tab.
+@MainActor
+enum SettingsLauncher {
+  static func open(tab: String? = nil) {
+    if let tab { UserDefaults.standard.set(tab, forKey: "settings.tab") }
+    NSApp.activate(ignoringOtherApps: true)
+    // SwiftUI's Settings scene has no AppKit entry point; run the app menu's
+    // own "Settings…" item, exactly as if it were clicked.
+    guard let appMenu = NSApp.mainMenu?.items.first?.submenu,
+          let index = appMenu.items.firstIndex(where: {
+            $0.keyEquivalent == "," && $0.keyEquivalentModifierMask == .command
+          }) else { return }
+    appMenu.performActionForItem(at: index)
+  }
+}
+
+/// Device menu — acts on the frontmost Mirror window. Shortcuts follow
+/// iPhone Mirroring where an equivalent exists (⌘1 Home, ⌘2 App Switcher).
+private struct DeviceCommands: View {
+  @AppStorage("mirror.autoScreenOff") private var phoneScreenOff = true
+
+  var body: some View {
+    Button("Back") { MirrorWindowController.key?.sendBack() }
+      .keyboardShortcut("[", modifiers: .command)
+    Button("Home") { MirrorWindowController.key?.sendHome() }
+      .keyboardShortcut("1", modifiers: .command)
+    Button("Recents") { MirrorWindowController.key?.sendRecents() }
+      .keyboardShortcut("2", modifiers: .command)
+    Divider()
+    Button("Take Screenshot") { MirrorWindowController.key?.takeScreenshot() }
+      .keyboardShortcut("s", modifiers: .command)
+    Button("Start or Stop Recording") { MirrorWindowController.key?.toggleRecord() }
+      .keyboardShortcut("r", modifiers: [.command, .shift])
+    Button("Rotate Screen") { MirrorWindowController.key?.rotateDevice() }
+    Toggle("Turn off phone screen while mirroring", isOn: Binding(
+      get: { phoneScreenOff },
+      set: { SessionCoordinator.shared.setPhoneScreenOff($0) }
+    ))
+    Divider()
+    Button("Refresh Active Display") {
+      guard let controller = MirrorWindowController.key, let serial = controller.deviceSerial else { return }
+      Task { await SessionCoordinator.shared.refreshActiveDisplay(for: Device(id: serial, state: .online)) }
+    }
+    .keyboardShortcut("r", modifiers: .command)
+    Divider()
+    Button("Connect a Phone…") { SessionCoordinator.shared.showConnectWindow() }
+  }
 }
 
 /// Lifecycle owner now that there is no Window scene to hang `.onAppear` off.
@@ -110,6 +110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   private var deviceCancellable: AnyCancellable?
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    SessionCoordinator.shared.monitor = monitor
     // Keep a Dock icon — without it, users have no visible signal that the
     // app is running until they spot the menu bar item. The Dock icon also
     // gives us a proper "click to reopen" target.
@@ -124,6 +125,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       guard !SessionCoordinator.shared.hasActiveSession else { return }
       await monitor.sweepStaleScrcpyServers()
     }
+
+    #if DEBUG
+    DebugScreens.showRequested(monitor: monitor)
+    #endif
 
     deviceCancellable = monitor.$devices
       .removeDuplicates()
@@ -163,14 +168,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
       return true
     }
 
-    // Nothing connected → surface the phone-shaped "no device" placeholder.
-    NSApp.activate(ignoringOtherApps: true)
-    SessionCoordinator.shared.syncWaitingWindow(hasOnlineDevice: false)
+    // Nothing connected → the phone-shaped Connect window.
+    SessionCoordinator.shared.showConnectWindow()
     return true
   }
+}
 
-  @objc func openPairing(_ sender: Any?) {
-    // Routed via the responder chain so MenuBarContent / PairingWindow can
-    // bind to it via @Environment(\.openWindow).
+#if DEBUG
+/// `-DMDebugShow connect,settings,menubar` opens screens at launch so they can
+/// be captured and checked without clicking through the app.
+@MainActor
+enum DebugScreens {
+  private static var windows: [NSWindow] = []
+
+  static func showRequested(monitor: DeviceMonitor) {
+    let requested = Set((UserDefaults.standard.string(forKey: "DMDebugShow") ?? "").split(separator: ",").map(String.init))
+    if requested.contains("connect") {
+      // After auto-mirror has had its chance, so the window isn't handed off.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 6) { SessionCoordinator.shared.showConnectWindow() }
+    }
+    if requested.contains("files") {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+        if let device = monitor.devices.first(where: { $0.state == .online }) {
+          SessionCoordinator.shared.openFiles(for: device)
+        }
+      }
+    }
+    if requested.contains("settings-later") {
+      // Same path as More › Mirroring Settings…, after launch has settled.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 5) { SettingsLauncher.open(tab: "mirror") }
+    }
+    if requested.contains("settings") {
+      let opener = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1, height: 1), styleMask: [], backing: .buffered, defer: false)
+      opener.contentView = NSHostingView(rootView: SettingsOpener())
+      opener.orderFrontRegardless()
+      windows.append(opener)
+    }
+    if requested.contains("menubar") {
+      let window = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
+      window.title = "Menu bar preview"
+      window.contentView = NSHostingView(rootView: MenuBarContent().environmentObject(monitor))
+      window.setContentSize(window.contentView?.fittingSize ?? NSSize(width: 300, height: 300))
+      window.setFrameTopLeftPoint(NSPoint(x: 80, y: (NSScreen.main?.visibleFrame.maxY ?? 800) - 40))
+      window.orderFrontRegardless()
+      windows.append(window)
+    }
   }
 }
+
+private struct SettingsOpener: View {
+  @Environment(\.openSettings) private var openSettings
+  var body: some View { Color.clear.onAppear { openSettings() } }
+}
+#endif

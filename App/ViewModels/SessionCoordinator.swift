@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import ADBKit
+import DeviceDiscovery
 import ScrcpyClient
 import MirrorEngine
 import FusionEngine
@@ -57,7 +58,16 @@ final class SessionCoordinator: ObservableObject {
   private var activePanel: [String: (id: Int, width: Int, height: Int, rotation: Int)] = [:]
   private var pollTasks: [String: Task<Void, Never>] = [:]
   private var autoMirroredSerials: Set<String> = []
-  private var waitingController: WaitingMirrorWindowController?
+  private var connectController: ConnectWindowController?
+  /// Online serials at the moment the user asked for the Connect window while
+  /// already mirroring; it stays up until a phone outside this set appears.
+  private var connectBaseline: Set<String>?
+  /// The user closed the idle Connect window; don't push it back until the
+  /// next mirror session ends or they ask for it.
+  private var connectDismissed = false
+  private var lastOnlineSerials: Set<String> = []
+  /// Set by the app delegate; the Connect window lists its online devices.
+  weak var monitor: DeviceMonitor?
 
   private var trustedKey = "mirror.trustedDeviceSerials"
   private var trusted: Set<String> {
@@ -75,14 +85,14 @@ final class SessionCoordinator: ObservableObject {
   func autoMirrorIfNeeded(devices: [Device]) {
     let online = devices.filter { $0.state == .online }
     let onlineSerials = Set(online.map(\.id))
+    lastOnlineSerials = onlineSerials
 
     // Reap zombies — when USB is unplugged the device drops out of the publish
     // list, but our Mirror controller still holds a frozen frame. Close it so
     // the Waiting placeholder can take over.
     for serial in Array(mirrorWindows.keys) where !onlineSerials.contains(serial) {
       log.notice("device \(serial) gone — closing Mirror")
-      mirrorWindows[serial]?.close()
-      mirrorWindows.removeValue(forKey: serial)
+      mirrorWindows.removeValue(forKey: serial)?.close()
       pollTasks[serial]?.cancel()
       pollTasks.removeValue(forKey: serial)
       activePanel.removeValue(forKey: serial)
@@ -93,11 +103,14 @@ final class SessionCoordinator: ObservableObject {
       filesWindows.removeValue(forKey: serial)
     }
 
-    syncWaitingWindow(hasOnlineDevice: !online.isEmpty)
-
     let autoEnabled = UserDefaults.standard.object(forKey: "mirror.autoOnConnect") as? Bool ?? true
-    guard autoEnabled else { return }
     let known = trusted
+    let willAutoMirror = autoEnabled && online.contains {
+      known.contains($0.id) && mirrorWindows[$0.id] == nil && !autoMirroredSerials.contains($0.id)
+    }
+    syncConnectWindow(willMirror: willAutoMirror)
+
+    guard autoEnabled else { return }
     for device in online {
       if mirrorWindows[device.id] != nil { continue }
       if autoMirroredSerials.contains(device.id) { continue }
@@ -108,30 +121,93 @@ final class SessionCoordinator: ObservableObject {
     }
   }
 
-  /// Shows the placeholder when no device is connected; hides it when a
-  /// real Mirror is about to take over the foreground. Safe to call repeatedly.
-  func syncWaitingWindow(hasOnlineDevice: Bool) {
-    let had = waitingController != nil
-    log.notice("syncWaiting hasOnlineDevice=\(hasOnlineDevice) hadWaiting=\(had) mirrorCount=\(self.mirrorWindows.count)")
-    if hasOnlineDevice || !mirrorWindows.isEmpty {
-      // CRITICAL: if any Mirror is up, the Waiting placeholder is by
-      // definition stale — close it. Without this, a Combine publish that
-      // briefly drops the device list would re-summon Waiting on top of
-      // a live Mirror, giving the "two windows" symptom.
-      if let wc = waitingController {
-        wc.window?.orderOut(nil)
-        wc.close()
-        waitingController = nil
-      }
-    } else {
-      if waitingController == nil {
-        let wc = WaitingMirrorWindowController()
-        waitingController = wc
-        wc.showWindow(nil)
-      } else {
-        waitingController?.window?.makeKeyAndOrderFront(nil)
+  // MARK: Live settings
+
+  private var settingsRestart: Task<Void, Never>?
+
+  /// Quality, sound, and keep-awake are scrcpy-server launch options, so open
+  /// mirrors restart to pick them up. Debounced so dragging the bitrate slider
+  /// restarts once, after it settles.
+  func mirrorLaunchSettingsChanged(refreshAudio: Bool = false) {
+    settingsRestart?.cancel()
+    settingsRestart = Task { [weak self] in
+      try? await Task.sleep(nanoseconds: 700_000_000)
+      guard !Task.isCancelled, let self else { return }
+      for (serial, controller) in Array(self.mirrorWindows) {
+        controller.isRestarting = true
+        await self.restartMirror(for: serial)
+        if refreshAudio { self.mirrorWindows[serial]?.refreshAudioOutput() }
       }
     }
+  }
+
+  /// Title-bar button and Device menu: flip the setting itself, then apply.
+  func setPhoneScreenOff(_ on: Bool) {
+    UserDefaults.standard.set(on, forKey: "mirror.autoScreenOff")
+    phoneScreenOffChanged(on)
+  }
+
+  func phoneScreenOffChanged(_ on: Bool) {
+    mirrorWindows.values.forEach { $0.applyPhoneScreenOff(on) }
+  }
+
+  func clipboardSyncChanged(_ on: Bool) {
+    mirrorWindows.values.forEach { $0.applyClipboardSync(on) }
+  }
+
+  // MARK: Connect window
+
+  /// Show the Connect window whenever nothing is mirroring and no trusted
+  /// phone is about to be; hide it as soon as a Mirror takes over.
+  func syncConnectWindow(willMirror: Bool = false) {
+    if let baseline = connectBaseline {
+      let newPhone = !lastOnlineSerials.subtracting(baseline).isEmpty
+      if newPhone && (willMirror || !mirrorWindows.isEmpty) { closeConnectWindow() }
+      return
+    }
+    if willMirror || !mirrorWindows.isEmpty {
+      closeConnectWindow()
+    } else if !connectDismissed {
+      presentConnectWindow(userInitiated: false)
+    }
+  }
+
+  /// User-initiated: menu bar "Connect a Phone…", Dock click with nothing open.
+  func showConnectWindow() {
+    connectDismissed = false
+    connectBaseline = mirrorWindows.isEmpty ? nil : lastOnlineSerials
+    presentConnectWindow(userInitiated: true)
+  }
+
+  /// Device-list updates arrive constantly; only a new window or an explicit
+  /// request may come forward, or the app would keep stealing focus.
+  private func presentConnectWindow(userInitiated: Bool) {
+    let isNew = connectController == nil
+    if isNew {
+      let wc = ConnectWindowController(monitor: monitor)
+      connectController = wc
+      NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: wc.window, queue: .main) { [weak self, weak wc] _ in
+        MainActor.assumeIsolated {
+          // Still registered means the user closed it (we unregister before closing).
+          guard let self, let wc, self.connectController === wc else { return }
+          wc.pairing.stop()
+          self.connectController = nil
+          self.connectBaseline = nil
+          self.connectDismissed = true
+        }
+      }
+    }
+    guard isNew || userInitiated else { return }
+    if userInitiated { NSApp.activate(ignoringOtherApps: true) }
+    connectController?.showWindow(nil)
+    connectController?.window?.makeKeyAndOrderFront(nil)
+  }
+
+  private func closeConnectWindow() {
+    guard let wc = connectController else { return }
+    connectController = nil
+    connectBaseline = nil
+    wc.close()
   }
 
   func startMirror(for device: Device) async {
@@ -150,10 +226,7 @@ final class SessionCoordinator: ObservableObject {
     )
     var controller: MirrorWindowController?
     do {
-      let c = try MirrorWindowController(deviceName: device.model.isEmpty ? device.id : device.model)
-      c.deviceSerial = device.id
-      mirrorWindows[device.id] = c
-      c.showWindow(nil)
+      let c = try makeMirrorWindow(for: device)
       controller = c
       try await launchSession(for: device, displayId: displayId, into: c)
       startActiveDisplayPolling(for: device)
@@ -182,8 +255,20 @@ final class SessionCoordinator: ObservableObject {
           log.notice("mirror started without audio for \(device.id)")
           return
         } catch {
-          // Audio-disabled retry also failed — fall through to next handler
           log.error("audio-disabled retry also failed for \(device.id): \(error)")
+        }
+        // Some phones' HEVC / AV1 encoders don't start at all; H.264 works on
+        // every Android device, so give it one last try before giving up.
+        if (UserDefaults.standard.string(forKey: "mirror.codec") ?? "h265") != "h264" {
+          await c.session.stop()
+          do {
+            try await launchSession(for: device, displayId: displayId, into: c, audioEnabled: false, codecOverride: "h264")
+            startActiveDisplayPolling(for: device)
+            log.notice("mirror started with H.264 fallback for \(device.id)")
+            return
+          } catch {
+            log.error("H.264 fallback also failed for \(device.id): \(error)")
+          }
         }
       }
 
@@ -194,13 +279,10 @@ final class SessionCoordinator: ObservableObject {
         if errDesc.contains("display") || errDesc.contains("short read") || errDesc.contains("scrcpy") {
           log.error("launch failed for \(device.id): \(error). Retrying with displayId=0...")
           activePanel.removeValue(forKey: device.id)
-          mirrorWindows[device.id]?.close()
-          mirrorWindows.removeValue(forKey: device.id)
+          mirrorWindows.removeValue(forKey: device.id)?.close()
           // Retry
           do {
-            let controller = try MirrorWindowController(deviceName: device.model.isEmpty ? device.id : device.model)
-            controller.deviceSerial = device.id
-            mirrorWindows[device.id] = controller
+            let controller = try makeMirrorWindow(for: device)
             try await launchSession(for: device, displayId: 0, into: controller)
             startActiveDisplayPolling(for: device)
             return
@@ -210,27 +292,40 @@ final class SessionCoordinator: ObservableObject {
         }
       }
 
-      let detailMsg = """
-        Device: \(device.model.isEmpty ? device.id : device.model)
-        SDK: \(device.androidSDK)
-        State: \(device.state.rawValue)
-        Transport: \(device.transport.rawValue)
-
-        If you see a protocol error, try:
-        1. Go to Settings → Advanced
-        2. Click "Clean up old scrcpy-server"
-        3. Reconnect the device
-
-        Error: \(error.localizedDescription)
-        """
+      let name = device.displayName
+      let detailMsg = String(localized: "If this keeps happening, open Settings › Advanced, choose Remove Leftover Mirroring Files, then reconnect the phone.")
+        + "\n\n\(name) · \(androidVersionName(sdk: device.androidSDK)) · \(device.transport.rawValue)\n\(error.localizedDescription)"
+      mirrorWindows.removeValue(forKey: device.id)?.close()
       let alert = NSAlert()
-      alert.messageText = "Failed to start Mirror"
+      alert.messageText = String(localized: "Couldn't start mirroring")
       alert.informativeText = detailMsg
-      alert.addButton(withTitle: "OK")
+      alert.addButton(withTitle: String(localized: "OK"))
       alert.runModal()
-      mirrorWindows[device.id]?.close()
-      mirrorWindows[device.id] = nil
+      syncConnectWindow()
     }
+  }
+
+  /// One place that creates, registers, and shows a Mirror window, so every
+  /// path gets the same close handling and hands off from the Connect window.
+  private func makeMirrorWindow(for device: Device) throws -> MirrorWindowController {
+    let c = try MirrorWindowController(deviceName: device.displayName)
+    c.deviceSerial = device.id
+    mirrorWindows[device.id] = c
+    let serial = device.id
+    NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: c.window, queue: .main) { [weak self, weak c] _ in
+      MainActor.assumeIsolated {
+        // Programmatic closes unregister first, so a hit here is the user's red button.
+        guard let self, let c, self.mirrorWindows[serial] === c else { return }
+        self.mirrorWindows.removeValue(forKey: serial)
+        self.pollTasks.removeValue(forKey: serial)?.cancel()
+        self.activePanel.removeValue(forKey: serial)
+        self.connectDismissed = true
+      }
+    }
+    connectDismissed = false
+    c.showWindow(nil)
+    closeConnectWindow()
+    return c
   }
 
   func openFiles(for device: Device) {
@@ -277,7 +372,7 @@ final class SessionCoordinator: ObservableObject {
         freeformTokens[device.id] = try await activator.activate(serial: device.id)
       }
 
-      let controller = try FusionAppWindowController(appLabel: "Desktop — \(device.model.isEmpty ? device.id : device.model)")
+      let controller = try FusionAppWindowController(appLabel: String(localized: "Desktop — \(device.displayName)"))
       fusionWindows[key] = controller
       controller.showWindow(nil)
 
@@ -381,8 +476,8 @@ final class SessionCoordinator: ObservableObject {
     pollTasks[device.id]?.cancel(); pollTasks.removeValue(forKey: device.id); activePanel.removeValue(forKey: device.id)
     for key in fusionWindows.keys.filter({ $0.hasPrefix(device.id + "|") }) { fusionWindows[key]?.close(); fusionWindows[key] = nil }
     if let t = freeformTokens.removeValue(forKey: device.id), let a = freeformActivators[device.id] { await a.deactivate(t) }
-    guard let controller = mirrorWindows[device.id] else { return }
-    await controller.session.stop(); controller.close(); mirrorWindows.removeValue(forKey: device.id)
+    guard let controller = mirrorWindows.removeValue(forKey: device.id) else { return }
+    await controller.session.stop(); controller.close()
   }
 
   func disconnectWirelessDevice(for device: Device) async {
@@ -390,7 +485,8 @@ final class SessionCoordinator: ObservableObject {
     if let mc = mirrorWindows[device.id] {
       pollTasks[device.id]?.cancel(); pollTasks.removeValue(forKey: device.id); activePanel.removeValue(forKey: device.id)
       autoMirroredSerials.remove(device.id)
-      await mc.session.stop(); mc.close(); mirrorWindows.removeValue(forKey: device.id)
+      mirrorWindows.removeValue(forKey: device.id)
+      await mc.session.stop(); mc.close()
     }
     for key in fusionWindows.keys.filter({ $0.hasPrefix(device.id + "|") }) { fusionWindows[key]?.close(); fusionWindows[key] = nil }
     if let t = freeformTokens.removeValue(forKey: device.id), let a = freeformActivators[device.id] { await a.deactivate(t) }
@@ -414,25 +510,24 @@ final class SessionCoordinator: ObservableObject {
     for device: Device,
     displayId: Int,
     into controller: MirrorWindowController,
-    audioEnabled: Bool = true
+    audioEnabled: Bool = true,
+    codecOverride: String? = nil
   ) async throws {
     let resources = try ResourceLocator.scrcpyResources()
     let launcher = ScrcpyServerLauncher(adb: adb, serial: device.id, resources: resources)
 
-    // Pull video knobs from Settings so the user can dial heat ↔ smoothness.
-    // Defaults match ScrcpyOptions: 4 Mbps / 60 fps / h265 — gentle on the
-    // device's hardware encoder, which is the dominant heat source.
+    // Video knobs from Settings. Defaults: H.265 at 60 fps and 8 Mbps — the
+    // phone's native resolution stays sharp in motion at that rate, and heat
+    // depends far more on frame rate than on bitrate.
     let defaults = UserDefaults.standard
-    let codec = (defaults.string(forKey: "mirror.codec") ?? "h265")
-    let bitrateMbps = (defaults.object(forKey: "mirror.bitrate") as? Int) ?? 4
+    let codec = codecOverride ?? defaults.string(forKey: "mirror.codec") ?? "h265"
+    let bitrateMbps = (defaults.object(forKey: "mirror.bitrate") as? Int) ?? 8
     let maxFps = (defaults.object(forKey: "mirror.maxFps") as? Int) ?? 60
     let audioOutput = defaults.string(forKey: "mirror.audioOutput") ?? "mac"
     // A sleeping phone drops its wireless-debugging link, which tears the
-    // mirror down. Hold the screen-off timeout at 30 min while mirroring.
-    let keepAwake = defaults.object(forKey: "mirror.keepAwake") as? Bool ?? true
-    if keepAwake {
-      await prepareScreenOffTimeout(serial: device.id)
-    }
+    // mirror down, so it's held awake (screen timeout 30 min) while mirroring.
+    // Not a setting: turning it off would only ever break the mirror.
+    await prepareScreenOffTimeout(serial: device.id)
 
     let options = ScrcpyOptions(
       videoBitRate: bitrateMbps * 1_000_000,
@@ -442,7 +537,7 @@ final class SessionCoordinator: ObservableObject {
       audioEnabled: audioEnabled && audioOutput == "mac",
       controlEnabled: true,
       displayId: displayId,
-      screenOffTimeoutMs: keepAwake ? Self.keepAwakeScreenOffTimeoutMs : -1
+      screenOffTimeoutMs: Self.keepAwakeScreenOffTimeoutMs
     )
     try await controller.session.start(launcher: launcher, options: options)
     await controller.bindControl()
@@ -494,9 +589,9 @@ final class SessionCoordinator: ObservableObject {
     } catch {
       log.error("restart failed for \(serial): \(error)")
       controller.isRestarting = false
-      controller.close()
       mirrorWindows.removeValue(forKey: serial)
       activePanel.removeValue(forKey: serial)
+      controller.close()
     }
   }
 

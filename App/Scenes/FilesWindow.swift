@@ -24,7 +24,7 @@ final class FilesWindowController: NSWindowController {
       backing: .buffered,
       defer: false
     )
-    let title = device.model.isEmpty ? device.id : device.model
+    let title = device.displayName
     window.title = String(localized: "Files — \(title)")
     window.titlebarAppearsTransparent = true
     window.toolbarStyle = .unified
@@ -40,6 +40,13 @@ final class FilesWindowController: NSWindowController {
 
 struct FilesView: View {
   @StateObject var viewModel: FilesViewModel
+
+  /// Finder-style: the window is titled after the folder you're in.
+  private var folderTitle: String {
+    let path = viewModel.currentPath
+    if path == "/sdcard" || path == "/sdcard/" { return String(localized: "Internal Storage") }
+    return path.split(separator: "/").last.map(String.init) ?? viewModel.device.displayName
+  }
   @State private var selection: Set<String> = []
   @State private var selectedShortcut: String? = "/sdcard"
   @State private var sortOrder = [KeyPathComparator(\SyncEntry.name)]
@@ -59,7 +66,7 @@ struct FilesView: View {
             .animation(.easeInOut(duration: 0.2), value: viewModel.installState)
         }
     }
-    .navigationTitle("")
+    .navigationTitle(folderTitle)
     .task { await viewModel.load() }
     .onDrop(of: [.fileURL], isTargeted: nil) { providers in
       handleDrop(providers: providers)
@@ -135,11 +142,11 @@ struct FilesView: View {
             .font(.title3)
             .foregroundStyle(.tint)
           VStack(alignment: .leading, spacing: 1) {
-            Text(viewModel.device.model.isEmpty ? viewModel.device.id : viewModel.device.model)
+            Text(viewModel.device.displayName)
               .font(.callout.weight(.medium))
               .lineLimit(1)
-            Text(viewModel.device.transport.rawValue.uppercased())
-              .font(.caption2.monospaced())
+            Text(verbatim: "\(viewModel.device.transport == .usb ? "USB" : "Wi-Fi") · \(androidVersionName(sdk: viewModel.device.androidSDK))")
+              .font(.caption)
               .foregroundStyle(.secondary)
           }
         }
@@ -147,7 +154,7 @@ struct FilesView: View {
       }
       Section("Favorites") {
         ForEach(FilesViewModel.shortcuts) { sc in
-          Label(sc.name, systemImage: sc.systemImage)
+          Label(LocalizedStringKey(sc.name), systemImage: sc.systemImage)
             .tag(sc.path)
         }
       }

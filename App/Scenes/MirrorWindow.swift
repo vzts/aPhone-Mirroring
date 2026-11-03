@@ -14,20 +14,18 @@ final class MirrorWindowController: NSWindowController {
   let session: MirrorSession
   let eventView: MirrorEventView
   let recorder = ScreenRecorder()
-  private var overlayBar: MirrorOverlayBar?
+  private var titlebarControls: MirrorTitlebarControls?
+  /// The rounded phone screen (mirror view's container), for the shutter flash.
+  private weak var screenView: NSView?
 
   private var currentDeviceSize: CGSize = .zero
   private var hasSetInitialFrame = false
   private var isPinned = false
   private var isRecording = false
-  private var isClipboardSyncing = true     // default ON, AndroMeld-style
   private var isScreenOff = false
-  /// When true, the phone display stays lit and auto-screen-off is suppressed.
-  private var isStayOn = false
   /// "mac" | "phone" | "none" — persisted in UserDefaults
   private var audioOutput: String {
-    get { UserDefaults.standard.string(forKey: "mirror.audioOutput") ?? "mac" }
-    set { UserDefaults.standard.set(newValue, forKey: "mirror.audioOutput") }
+    UserDefaults.standard.string(forKey: "mirror.audioOutput") ?? "mac"
   }
   private var clipboardBridge: ClipboardBridge?
   private let deviceDisplayName: String
@@ -36,13 +34,15 @@ final class MirrorWindowController: NSWindowController {
   // display state so the UI doesn't drift after the user manually unlocks.
   private let adb = ADBClient()
   private var screenStatePoller: Timer?
-  private var autoScreenOffEnabled = false   // whether the user wants auto-off
+  /// Settings › Mirroring › Turn off phone screen while mirroring, applied live.
+  private var autoScreenOffEnabled = false
   /// Device media volume saved before we muted it — restored when switching
   /// back to "phone" mode so we don't leave the phone permanently silent.
   private var savedDeviceVolume: Int?
 
   // iPhone-Mirroring-style chrome auto-hide.
-  private var chromeRevealed = false
+  // Starts true so the initial setChrome(revealed: false) actually hides it.
+  private var chromeRevealed = true
   private var chromeHideTimer: Timer?
   private var mouseMonitor: Any?
   private var uhidKeyboard: UHIDKeyboardManager?
@@ -86,7 +86,10 @@ final class MirrorWindowController: NSWindowController {
     window.isOpaque = false
     window.hasShadow = true
     window.toolbarStyle = .unified
-    window.contentAspectRatio = NSSize(width: 9, height: 16)
+    window.contentAspectRatio = NSSize(
+      width: ConnectWindowController.defaultDevice.width + 2 * Self.bezelInset,
+      height: ConnectWindowController.defaultDevice.height + Self.chromeStrip + 2 * Self.bezelInset
+    )
 
     // Wrap the Metal eventView in a rounded black phone-shell view.
     // Putting the inner-rounded mask on a *parent* NSView (instead of the
@@ -106,6 +109,7 @@ final class MirrorWindowController: NSWindowController {
       eventView.topAnchor.constraint(equalTo: screenClip.topAnchor),
       eventView.bottomAnchor.constraint(equalTo: screenClip.bottomAnchor),
     ])
+    self.screenView = screenClip
     let bezel = PhoneBezelView(
       content: screenClip,
       inset: Self.bezelInset,
@@ -128,22 +132,44 @@ final class MirrorWindowController: NSWindowController {
     ])
 
     window.contentView = container
-    window.center()
+    window.isReleasedWhenClosed = false
+    if let last = MirrorFramePersistence.lastFrame(),
+       NSScreen.screens.contains(where: { $0.visibleFrame.intersects(last) }) {
+      // Open where the phone was; the real aspect is applied on the first frame.
+      window.setFrame(MirrorFramePersistence.fit(last, aspect: window.contentAspectRatio, in: window), display: false)
+    } else {
+      window.setFrame(PhoneWindowSizing.defaultFrame(aspect: window.contentAspectRatio, in: window, screen: NSScreen.main), display: false)
+    }
     super.init(window: window)
 
-    NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in self?.saveWindowFrame() }
+    // Save the frame whenever it settles, not just on close — a crash or a
+    // dropped connection shouldn't cost the user their window placement.
+    for name in [NSWindow.willCloseNotification, NSWindow.didMoveNotification, NSWindow.didEndLiveResizeNotification] {
+      NotificationCenter.default.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
+        MainActor.assumeIsolated { self?.saveWindowFrame() }
+      }
+    }
 
-    // Custom HUD-style overlay bar in the chrome strip above the bezel.
-    // Floats next to (not over) the device content.
-    let overlay = MirrorOverlayBar(
+    // iPhone-Mirroring-style title bar: traffic lights on the left, Android
+    // navigation on the right, both revealed when the pointer nears the top.
+    let controls = MirrorTitlebarControls(
+      onBack: { [weak self] in self?.sendBack() },
+      onHome: { [weak self] in self?.sendHome() },
+      onRecents: { [weak self] in self?.sendRecents() },
+      onScreenshot: { [weak self] in self?.takeScreenshot() },
+      onTogglePhoneScreen: { [weak self] in
+        // Same single setting as Settings › Mirroring, so both always agree.
+        guard let self else { return }
+        SessionCoordinator.shared.setPhoneScreenOff(!self.autoScreenOffEnabled)
+      },
       onMore: { [weak self] anchor in self?.showMoreMenu(anchor: anchor) }
     )
-    self.overlayBar = overlay
-    container.addSubview(overlay)
-    overlay.translatesAutoresizingMaskIntoConstraints = false
+    self.titlebarControls = controls
+    container.addSubview(controls)
+    controls.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      overlay.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-      overlay.topAnchor.constraint(equalTo: container.topAnchor, constant: 2),
+      controls.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -6),
+      controls.centerYAnchor.constraint(equalTo: container.topAnchor, constant: Self.chromeStrip / 2),
     ])
 
     renderer.onDimensionsChanged = { [weak self] size in
@@ -170,7 +196,7 @@ final class MirrorWindowController: NSWindowController {
            event.keyCode == 47,   // "." key
            event.modifierFlags.contains(.command) {
           Task { @MainActor in
-            if let moreBtn = self.overlayBar?.moreButton {
+            if let moreBtn = self.titlebarControls?.moreButton {
               self.showMoreMenu(anchor: moreBtn)
             }
           }
@@ -204,7 +230,7 @@ final class MirrorWindowController: NSWindowController {
       }
       // Restore screen power before tearing down so we don't leave the device
       // dark after disconnect. Use setScreenPowerMode(NORMAL) for a clean wake.
-      if isScreenOff, let writer = await session.control {
+      if autoScreenOffEnabled || isScreenOff, let writer = await session.control {
         try? await writer.send(.setScreenPowerMode(2))  // NORMAL — restore full power
       }
       // Restore device media volume if we muted it for "mac" audio mode.
@@ -235,11 +261,14 @@ final class MirrorWindowController: NSWindowController {
     let autoScreenOff = defaults.object(forKey: "mirror.autoScreenOff") as? Bool ?? true
 
     await MainActor.run {
-      self.isClipboardSyncing = clipboardOn
       self.autoScreenOffEnabled = autoScreenOff
+      self.titlebarControls?.setPhoneScreenOff(autoScreenOff)
       self.eventView.controlSink = { msg in
         Task { try? await writer.send(msg) }
       }
+      // A restart brings a new control channel; retire the old bridge first.
+      self.clipboardBridge?.stop()
+      self.clipboardBridge = nil
       if let reader {
         let bridge = ClipboardBridge(writer: writer, reader: reader)
         bridge.enabled = clipboardOn
@@ -267,6 +296,17 @@ final class MirrorWindowController: NSWindowController {
     // even when the user unlocks the phone manually.
     startScreenStatePoller()
 
+    // Lay out Back / Home / Recents the way the phone's own navigation bar does.
+    if let serial = deviceSerial {
+      let lines = ((try? await adb.shell(
+        "settings get global navigationbar_key_order; getprop ro.product.manufacturer", serial: serial
+      )) ?? "").split(separator: "\n").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      let order = lines.first ?? ""
+      let isSamsung = lines.dropFirst().first?.lowercased() == "samsung"
+      let backFirst = order == "1" || (order != "0" && !isSamsung)
+      await MainActor.run { self.titlebarControls?.setNavigationOrder(backFirst: backFirst) }
+    }
+
     // Apply the audio-output mode chosen in Settings.  When "mac" is active we
     // save the phone's current media volume and mute it so audio only plays
     // from the Mac (no double-sound).  Restored on disconnect / mode change.
@@ -289,23 +329,36 @@ final class MirrorWindowController: NSWindowController {
     await MainActor.run { self.uhidKeyboard = km; self.eventView.uhidKeyboard = km; km.create() }
   }
 
-  // MARK: actions (wired from MirrorOverlayBar / window menu / keyboard)
+  // MARK: actions (wired from the title bar, More menu, Device menu, keyboard)
 
-  @objc private func takeScreenshot() {
+  /// Saves to the Desktop. A quick white flash on the phone screen confirms
+  /// it, instead of a Finder window popping up every time.
+  @objc func takeScreenshot() {
     guard let buffer = renderer.lastPixelBuffer else { return }
-    let dir = pictureRoot()
-    let stamp = ISO8601DateFormatter().string(from: Date())
-      .replacingOccurrences(of: ":", with: "-")
-    let url = dir.appendingPathComponent("Screenshot-\(stamp).png")
+    let url = ScreenshotLocation.newFileURL(source: deviceDisplayName)
     do {
       try Screenshotter.savePNG(pixelBuffer: buffer, to: url)
-      NSWorkspace.shared.activateFileViewerSelecting([url])
+      flashScreen()
     } catch {
       showAlert(error)
     }
   }
 
-  @objc private func toggleRecord() {
+  private func flashScreen() {
+    guard let screen = screenView else { return }
+    let flash = NSView(frame: screen.bounds)
+    flash.autoresizingMask = [.width, .height]
+    flash.wantsLayer = true
+    flash.layer?.backgroundColor = NSColor.white.cgColor
+    flash.alphaValue = 0.7
+    screen.addSubview(flash)
+    NSAnimationContext.runAnimationGroup({ ctx in
+      ctx.duration = 0.35
+      flash.animator().alphaValue = 0
+    }, completionHandler: { flash.removeFromSuperview() })
+  }
+
+  @objc func toggleRecord() {
     if recorder.isRecording {
       recorder.stop { [weak self] url in
         Task { @MainActor in
@@ -328,23 +381,12 @@ final class MirrorWindowController: NSWindowController {
     }
   }
 
-  @objc private func togglePin() {
+  @objc func togglePin() {
     isPinned.toggle()
     window?.level = isPinned ? .floating : .normal
   }
 
-  @objc private func wakeDevice() {
-    // Use setScreenPowerMode(NORMAL) to properly wake the device screen
-    isScreenOff = false
-    window?.toolbar?.validateVisibleItems()
-    Task {
-      if let writer = await session.control {
-        try? await writer.send(.setScreenPowerMode(2))  // NORMAL — wake screen
-      }
-    }
-  }
-
-  @objc private func sendBack() {
+  @objc func sendBack() {
     Task {
       if let writer = await session.control {
         try? await writer.send(.backOrScreenOn(action: .down))
@@ -353,17 +395,17 @@ final class MirrorWindowController: NSWindowController {
     }
   }
 
-  @objc private func sendHome() {
+  @objc func sendHome() {
     sendKey(action: .down, code: 3)   // KEYCODE_HOME
     sendKey(action: .up, code: 3)
   }
 
-  @objc private func sendRecents() {
+  @objc func sendRecents() {
     sendKey(action: .down, code: 187) // KEYCODE_APP_SWITCH
     sendKey(action: .up, code: 187)
   }
 
-  @objc private func rotateDevice() {
+  @objc func rotateDevice() {
     Task {
       if let writer = await session.control {
         try? await writer.send(.rotateDevice())
@@ -371,26 +413,29 @@ final class MirrorWindowController: NSWindowController {
     }
   }
 
-  @objc private func toggleClipboardSync() {
-    isClipboardSyncing.toggle()
-    clipboardBridge?.enabled = isClipboardSyncing
+  // MARK: live settings — SessionCoordinator calls these when Settings change
+
+  func applyClipboardSync(_ on: Bool) {
+    clipboardBridge?.enabled = on
   }
 
-  /// Cycle audio output: mac → phone → none → mac
-  /// Changing audio mode requires restarting the scrcpy server so the new
-  /// `audioEnabled` flag takes effect on the device side.
-  @objc private func cycleAudioOutput() {
-    let next: String
-    switch audioOutput {
-    case "mac":   next = "phone"
-    case "phone": next = "none"
-    default:      next = "mac"
+  /// Settings › Turn off phone screen while mirroring. On keeps the panel dark
+  /// (the poller re-darkens it if the phone lights up); off lights it now.
+  func applyPhoneScreenOff(_ on: Bool) {
+    autoScreenOffEnabled = on
+    isScreenOff = on
+    titlebarControls?.setPhoneScreenOff(on)
+    Task {
+      if let writer = await session.control {
+        // 0 = panel off (the display keeps rendering for the mirror), 2 = normal
+        try? await writer.send(.setScreenPowerMode(on ? 0 : 2))
+      }
     }
-    audioOutput = next
-    // Restart the session so scrcpy-server starts / stops the audio stream.
-    guard let serial = deviceSerial else { return }
-    isRestarting = true
-    Task { await SessionCoordinator.shared.restartMirror(for: serial) }
+  }
+
+  /// After a restart for a new audio output, mute or restore the phone side.
+  func refreshAudioOutput() {
+    applyAudioOutput(audioOutput)
   }
 
   /// Apply an audio-output mode to both the Mac-side renderer and the device.
@@ -452,58 +497,6 @@ final class MirrorWindowController: NSWindowController {
     } catch {}
   }
 
-  @objc private func toggleScreenOff() {
-    // Flip to the *desired* state — the poller will reconcile if the device
-    // doesn't match (e.g. user already unlocked manually).
-    let turnOff = !isScreenOff
-    isScreenOff = turnOff
-    window?.toolbar?.validateVisibleItems()
-    Task {
-      if let writer = await session.control {
-        // setScreenPowerMode: 0=OFF (panel dark, display still renders for mirror)
-        //                     2=NORMAL (full wake)
-        try? await writer.send(.setScreenPowerMode(turnOff ? 0 : 2))
-      }
-    }
-  }
-
-  /// Toggle "Stay On" — keeps the phone display lit and suppresses auto-off.
-  /// Turning it off restores the auto-screen-off preference from Settings.
-  @objc private func toggleStayOn() {
-    isStayOn.toggle()
-    if isStayOn {
-      autoScreenOffEnabled = false
-      isScreenOff = false
-      Task {
-        if let writer = await session.control {
-          try? await writer.send(.setScreenPowerMode(2))  // NORMAL — wake screen
-        }
-      }
-    } else {
-      // Restore the user's auto-screen-off preference.
-      let autoOff = UserDefaults.standard.object(forKey: "mirror.autoScreenOff") as? Bool ?? true
-      autoScreenOffEnabled = autoOff
-      if autoOff {
-        isScreenOff = true
-        Task {
-          if let writer = await session.control {
-            try? await writer.send(.setScreenPowerMode(0))  // OFF
-          }
-        }
-      }
-    }
-    window?.toolbar?.validateVisibleItems()
-  }
-
-  /// Change the max-FPS preset. Persists to UserDefaults and restarts the
-  /// scrcpy session so the new frame rate takes effect on the device.
-  private func changeFps(_ fps: Int) {
-    UserDefaults.standard.set(fps, forKey: "mirror.maxFps")
-    guard let serial = deviceSerial else { return }
-    isRestarting = true
-    Task { await SessionCoordinator.shared.restartMirror(for: serial) }
-  }
-
   // MARK: screen-state poller
 
   /// Poll the phone's real screen state via ADB so `isScreenOff` (and therefore
@@ -552,13 +545,13 @@ final class MirrorWindowController: NSWindowController {
     return isScreenOff
   }
 
-  @objc private func openFiles() {
+  @objc func openFiles() {
     guard let serial = deviceSerial else { return }
     let device = Device(id: serial, model: session.deviceName, state: .online)
     SessionCoordinator.shared.openFiles(for: device)
   }
 
-  @objc private func openDesktop() {
+  @objc func openDesktop() {
     guard let serial = deviceSerial else { return }
     let device = Device(id: serial, model: session.deviceName, androidSDK: 34, state: .online)
     Task { await SessionCoordinator.shared.openDesktop(for: device) }
@@ -572,56 +565,54 @@ final class MirrorWindowController: NSWindowController {
     }
   }
 
-  // MARK: more menu — every action that didn't make it onto the HUD bar
+  // MARK: more menu — native NSMenu so toggles show checkmarks and choices
+  // read as choices; rebuilt on every open so state is always current.
 
-  private weak var morePopover: NSPopover?
+  private var isMoreMenuOpen = false
 
   private func showMoreMenu(anchor: NSView) {
-    if let existing = morePopover, existing.isShown {
-      existing.performClose(nil)
-      return
-    }
-    let popover = NSPopover()
-    popover.behavior = .transient
-    popover.delegate = self
-
-    let dismiss: () -> Void = { [weak popover] in popover?.performClose(nil) }
-    let panel = MoreActionsPanel(
-      state: MoreActionsPanel.State(
-        isRecording: isRecording,
-        isClipboardSyncing: isClipboardSyncing,
-        isScreenOff: isScreenOff,
-        isPinned: isPinned,
-        audioOutput: audioOutput,
-        isStayOn: isStayOn,
-        currentFps: (UserDefaults.standard.object(forKey: "mirror.maxFps") as? Int) ?? 60
-      ),
-      onBack:       { [weak self] in dismiss(); self?.sendBack() },
-      onHome:       { [weak self] in dismiss(); self?.sendHome() },
-      onRecents:    { [weak self] in dismiss(); self?.sendRecents() },
-      onFiles:      { [weak self] in dismiss(); self?.openFiles() },
-      onDesktop:    { [weak self] in dismiss(); self?.openDesktop() },
-      onScreenshot: { [weak self] in dismiss(); self?.takeScreenshot() },
-      onRecord:     { [weak self] in dismiss(); self?.toggleRecord() },
-      onRotate:     { [weak self] in dismiss(); self?.rotateDevice() },
-      onClipboard:  { [weak self] in dismiss(); self?.toggleClipboardSync() },
-      onScreenOff:  { [weak self] in dismiss(); self?.toggleScreenOff() },
-      onWake:       { [weak self] in dismiss(); self?.wakeDevice() },
-      onPin:        { [weak self] in dismiss(); self?.togglePin() },
-      onCycleAudio: { [weak self] in dismiss(); self?.cycleAudioOutput() },
-      onStayOn:     { [weak self] in dismiss(); self?.toggleStayOn() },
-      onFpsChange:  { [weak self] fps in dismiss(); self?.changeFps(fps) }
-    )
-    let hosting = NSHostingController(rootView: panel)
-    popover.contentViewController = hosting
-    popover.contentSize = hosting.view.fittingSize
-    morePopover = popover
-
-    // Keep chrome alive while popover is up (popoverDidClose re-arms hide).
+    guard !isMoreMenuOpen else { return }
+    let menu = makeMoreMenu()
     setChrome(revealed: true)
     chromeHideTimer?.invalidate()
     chromeHideTimer = nil
-    popover.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: .maxY)
+    isMoreMenuOpen = true
+    let y = anchor.isFlipped ? anchor.bounds.maxY + 6 : -6
+    menu.popUp(positioning: nil, at: NSPoint(x: 0, y: y), in: anchor)
+    isMoreMenuOpen = false
+    scheduleHideChrome()
+  }
+
+  /// Things you do to this phone or window. Preferences (quality, sound,
+  /// phone screen, clipboard) live only in Settings, which applies them live.
+  private func makeMoreMenu() -> NSMenu {
+    let menu = NSMenu()
+    menu.autoenablesItems = false
+
+    menu.addItem(ActionMenuItem(
+      isRecording ? String(localized: "Stop Recording") : String(localized: "Start Recording"),
+      symbol: isRecording ? "stop.circle" : "record.circle", key: "r", modifiers: [.command, .shift]
+    ) { [weak self] in self?.toggleRecord() })
+    menu.addItem(ActionMenuItem(String(localized: "Rotate Screen"), symbol: "rotate.right") { [weak self] in
+      self?.rotateDevice()
+    })
+    menu.addItem(.separator())
+
+    menu.addItem(ActionMenuItem(String(localized: "Files…"), symbol: "folder") { [weak self] in
+      self?.openFiles()
+    })
+    menu.addItem(ActionMenuItem(String(localized: "Desktop Mode…"), symbol: "display") { [weak self] in
+      self?.openDesktop()
+    })
+    menu.addItem(.separator())
+
+    menu.addItem(ActionMenuItem(String(localized: "Keep Window on Top"), symbol: "pin", state: isPinned ? .on : .off) { [weak self] in
+      self?.togglePin()
+    })
+    menu.addItem(ActionMenuItem(String(localized: "Mirroring Settings…"), symbol: "gearshape", key: ",") {
+      SettingsLauncher.open(tab: "mirror")
+    })
+    return menu
   }
 
   // MARK: chrome reveal — iPhone-Mirroring style
@@ -639,6 +630,10 @@ final class MirrorWindowController: NSWindowController {
   }
 
   private func setChrome(revealed: Bool, animated: Bool = true) {
+    var revealed = revealed
+    #if DEBUG
+    if UserDefaults.standard.bool(forKey: "DMChromeVisible") { revealed = true }
+    #endif
     chromeHideTimer?.invalidate()
     chromeHideTimer = nil
     if chromeRevealed == revealed { return }
@@ -650,21 +645,26 @@ final class MirrorWindowController: NSWindowController {
       window.standardWindowButton(.miniaturizeButton),
       window.standardWindowButton(.zoomButton),
     ]
+    // The window is transparent around the bezel, so its shadow follows
+    // whatever is drawn; recompute it or a hidden capsule leaves an outline.
     if animated {
-      NSAnimationContext.runAnimationGroup { ctx in
+      NSAnimationContext.runAnimationGroup({ ctx in
         ctx.duration = 0.18
         buttons.forEach { $0?.animator().alphaValue = alpha }
-        overlayBar?.animator().alphaValue = alpha
-      }
+        titlebarControls?.animator().alphaValue = alpha
+      }, completionHandler: { [weak window] in
+        window?.invalidateShadow()
+      })
     } else {
       buttons.forEach { $0?.alphaValue = alpha }
-      overlayBar?.alphaValue = alpha
+      titlebarControls?.alphaValue = alpha
+      window.invalidateShadow()
     }
   }
 
   private func scheduleHideChrome() {
-    // Don't fight the More popover — let popoverDidClose restart the timer.
-    if let popover = morePopover, popover.isShown { return }
+    // Don't hide under an open More menu — showMoreMenu re-arms on close.
+    if isMoreMenuOpen { return }
     chromeHideTimer?.invalidate()
     // Stays visible 2s after the last cursor activity. Any mouseMoved /
     // mouseDown / scroll resets this timer (see mouseMonitor in init), so as
@@ -687,6 +687,8 @@ final class MirrorWindowController: NSWindowController {
     // device area + 2*bezelInset on each side + chromeStrip at the top.
     let aspect = aspectRatio(for: size)
     window.contentAspectRatio = aspect
+    // Narrower than this and the title-bar capsules run into the traffic lights.
+    window.contentMinSize = NSSize(width: 290, height: (290 * aspect.height / aspect.width).rounded())
 
     if !hasSetInitialFrame {
       hasSetInitialFrame = true
@@ -716,40 +718,30 @@ final class MirrorWindowController: NSWindowController {
   }
 
   private func setInitialFrame(deviceSize: CGSize, window: NSWindow) {
-    let screenVisible = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? .zero
-    let target = min(screenVisible.width, screenVisible.height) * 0.6
-    let inset = Self.bezelInset
-    let chrome = Self.chromeStrip
-    let scale: CGFloat = (deviceSize.height >= deviceSize.width)
-      ? (target - chrome - 2 * inset) / deviceSize.height
-      : (target - 2 * inset) / deviceSize.width
-    let contentSize = CGSize(
-      width:  deviceSize.width  * scale + 2 * inset,
-      height: deviceSize.height * scale + chrome + 2 * inset
-    )
-    let frame = window.frameRect(forContentRect: NSRect(origin: .zero, size: contentSize))
-    var positioned = frame
-    positioned.origin = CGPoint(
-      x: screenVisible.midX - frame.width / 2,
-      y: screenVisible.midY - frame.height / 2
-    )
-    window.setFrame(positioned, display: true)
+    window.setFrame(PhoneWindowSizing.defaultFrame(aspect: window.contentAspectRatio, in: window, screen: window.screen), display: true)
   }
 
   private func saveWindowFrame() {
-    guard let s = deviceSerial, let f = window?.frame else { return }
-    UserDefaults.standard.set(["x": f.origin.x, "y": f.origin.y, "width": f.size.width, "height": f.size.height], forKey: "mirror.windowFrame.\(s)")
+    // Before the first video frame the window still has its placeholder size.
+    guard hasSetInitialFrame, let f = window?.frame else { return }
+    MirrorFramePersistence.save(f, serial: deviceSerial)
   }
 
+  /// Put the phone where it last was on screen: the shared last frame (also
+  /// written by the Connect window) unless another Mirror already sits there,
+  /// then this device's own frame. Width follows the current device aspect.
   @discardableResult
   private func restoreWindowFrame() -> Bool {
-    guard let s = deviceSerial,
-          let d = UserDefaults.standard.dictionary(forKey: "mirror.windowFrame.\(s)") as? [String: CGFloat],
-          let x = d["x"], let y = d["y"], let w = d["width"], let h = d["height"],
-          let win = self.window else { return false }
-    let f = NSRect(x: x, y: y, width: w, height: h)
-    guard NSScreen.screens.contains(where: { $0.visibleFrame.intersects(f) }) else { return false }
-    win.setFrame(f, display: true)
+    guard let win = self.window else { return false }
+    let othersOpen = NSApp.windows.contains {
+      $0 !== win && $0.isVisible && $0.windowController is MirrorWindowController
+    }
+    let device = deviceSerial.flatMap(MirrorFramePersistence.frame(serial:))
+    let candidates = othersOpen ? [device] : [MirrorFramePersistence.lastFrame(), device]
+    guard let f = candidates.compactMap({ $0 }).first(where: { r in
+      NSScreen.screens.contains { $0.visibleFrame.intersects(r) }
+    }) else { return false }
+    win.setFrame(MirrorFramePersistence.fit(f, aspect: win.contentAspectRatio, in: win), display: true)
     win.invalidateShadow()
     return true
   }
@@ -763,13 +755,6 @@ final class MirrorWindowController: NSWindowController {
 
   // MARK: helpers
 
-  private func pictureRoot() -> URL {
-    let base = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first
-      ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
-    let dir = base.appendingPathComponent("DroidMirroring").appendingPathComponent(deviceDisplayName)
-    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    return dir
-  }
 
   private func movieRoot() -> URL {
     let base = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
@@ -783,246 +768,6 @@ final class MirrorWindowController: NSWindowController {
     let alert = NSAlert(error: error)
     if let window { alert.beginSheetModal(for: window) }
     else { alert.runModal() }
-  }
-}
-
-// MARK: NSPopoverDelegate — re-arm chrome hide once More popover closes
-
-extension MirrorWindowController: NSPopoverDelegate {
-  func popoverDidClose(_ notification: Notification) {
-    scheduleHideChrome()
-  }
-}
-
-// MARK: MoreActionsPanel — SwiftUI grid shown by the ⋯ button
-
-struct MoreActionsPanel: View {
-  struct State {
-    var isRecording: Bool
-    var isClipboardSyncing: Bool
-    var isScreenOff: Bool
-    var isPinned: Bool
-    var audioOutput: String  // "mac" | "phone" | "none"
-    var isStayOn: Bool
-    var currentFps: Int
-  }
-
-  let state: State
-  let onBack: () -> Void
-  let onHome: () -> Void
-  let onRecents: () -> Void
-  let onFiles: () -> Void
-  let onDesktop: () -> Void
-  let onScreenshot: () -> Void
-  let onRecord: () -> Void
-  let onRotate: () -> Void
-  let onClipboard: () -> Void
-  let onScreenOff: () -> Void
-  let onWake: () -> Void
-  let onPin: () -> Void
-  let onCycleAudio: () -> Void
-  let onStayOn: () -> Void
-  let onFpsChange: (Int) -> Void
-
-  var audioLabel: String {
-    switch state.audioOutput {
-    case "mac":   return String(localized: "Mac")
-    case "phone": return String(localized: "Phone")
-    default:      return String(localized: "Mute")
-    }
-  }
-
-  var audioSymbol: String {
-    switch state.audioOutput {
-    case "mac":   return "speaker.wave.3.fill"
-    case "phone": return "iphone.gen2"
-    default:      return "speaker.slash.fill"
-    }
-  }
-
-  var body: some View {
-    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
-      Tile(symbol: "chevron.backward", label: String(localized: "Back"),    action: onBack)
-      Tile(symbol: "circle",           label: String(localized: "Home"),    action: onHome)
-      Tile(symbol: "square.stack",     label: String(localized: "Recents"), action: onRecents)
-      Tile(symbol: "folder",           label: String(localized: "Files"),   action: onFiles)
-
-      Tile(symbol: "display",          label: String(localized: "Desktop"), action: onDesktop)
-      Tile(symbol: "camera",           label: String(localized: "Capture"), action: onScreenshot)
-      Tile(symbol: state.isRecording ? "stop.circle.fill" : "record.circle",
-           label: state.isRecording ? String(localized: "Stop") : String(localized: "Record"),
-           tint: state.isRecording ? .red : nil,
-           action: onRecord)
-      Tile(symbol: "rotate.right",     label: String(localized: "Rotate"),  action: onRotate)
-
-      Tile(symbol: state.isClipboardSyncing ? "doc.on.clipboard.fill" : "doc.on.clipboard",
-           label: String(localized: "Clipboard"),
-           tint: state.isClipboardSyncing ? .accentColor : nil,
-           action: onClipboard)
-      Tile(symbol: state.isScreenOff ? "moon.fill" : "moon",
-           label: state.isScreenOff ? String(localized: "Wake") : String(localized: "Sleep"),
-           tint: state.isScreenOff ? .yellow : nil,
-           action: onScreenOff)
-      Tile(symbol: audioSymbol, label: audioLabel, action: onCycleAudio)
-      Tile(symbol: state.isPinned ? "pin.fill" : "pin",
-           label: String(localized: "Pin"),
-           tint: state.isPinned ? .accentColor : nil,
-           action: onPin)
-
-      Tile(symbol: state.isStayOn ? "sun.max.fill" : "sun.max",
-           label: state.isStayOn ? String(localized: "Stay On") : String(localized: "Auto Off"),
-           tint: state.isStayOn ? .orange : nil,
-           action: onStayOn)
-      ForEach([30, 60, 90, 120], id: \.self) { fps in
-        Tile(symbol: "",
-             label: "FPS",
-             tint: state.currentFps == fps ? .accentColor : nil,
-             action: { onFpsChange(fps) },
-             text: "\(fps)")
-      }
-
-      Tile(symbol: "power", label: String(localized: "Power"), action: onWake)
-    }
-    .padding(12)
-    .frame(width: 340)
-  }
-}
-
-private struct Tile: View {
-  let symbol: String
-  let label: String
-  var tint: Color? = nil
-  let action: () -> Void
-  /// When non-nil, render `text` instead of an SF Symbol image (e.g. FPS numbers).
-  var text: String? = nil
-
-  @State private var hovering = false
-
-  var body: some View {
-    Button(action: action) {
-      VStack(spacing: 4) {
-        Group {
-          if let text {
-            Text(text)
-              .font(.system(size: 16, weight: .semibold, design: .rounded))
-          } else {
-            Image(systemName: symbol)
-              .font(.system(size: 18, weight: .medium))
-          }
-        }
-        .foregroundStyle(tint ?? .primary)
-        .frame(width: 44, height: 44)
-        .background(
-          RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .fill(hovering ? Color.primary.opacity(0.18) : Color.primary.opacity(0.08))
-        )
-        Text(label)
-          .font(.system(size: 10))
-          .foregroundStyle(.secondary)
-      }
-      .frame(maxWidth: .infinity)
-      .contentShape(Rectangle())
-    }
-    .buttonStyle(.plain)
-    .onHover { hovering = $0 }
-  }
-}
-
-// MARK: MirrorOverlayBar — single ⋯ button that reveals the More popover on hover
-
-/// A tiny dark pill with a "⋯" glyph that floats on the chrome strip above
-/// the phone bezel.  Hovering reveals the More-actions popover (which now
-/// also contains Files and Desktop).  Click also toggles the popover.
-final class MirrorOverlayBar: NSView {
-  /// Called when the user triggers the ⋯ button (hover or click).
-  private let onMore: (NSView) -> Void
-
-  /// Expose the button so the controller can anchor the popover for the ⌘. shortcut.
-  private(set) var moreButton: NSButton?
-
-  private var hoverTimer: Timer?
-  private var hoverTracking: NSTrackingArea?
-
-  // MARK: init
-
-  init(onMore: @escaping (NSView) -> Void) {
-    self.onMore = onMore
-    super.init(frame: .zero)
-    wantsLayer = true
-    layer?.cornerCurve = .continuous
-
-    // --- dark pill background ---
-    let barBg = NSView()
-    barBg.wantsLayer = true
-    barBg.layer?.backgroundColor = NSColor(white: 0.0, alpha: 0.85).cgColor
-    barBg.layer?.cornerRadius = 14
-    barBg.layer?.cornerCurve = .continuous
-    addSubview(barBg)
-    barBg.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      barBg.leadingAnchor.constraint(equalTo: leadingAnchor),
-      barBg.trailingAnchor.constraint(equalTo: trailingAnchor),
-      barBg.topAnchor.constraint(equalTo: topAnchor),
-      barBg.bottomAnchor.constraint(equalTo: bottomAnchor),
-    ])
-
-    // --- ⋯ button ---
-    let symCfg = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
-    let img = NSImage(systemSymbolName: "ellipsis", accessibilityDescription: String(localized: "More"))?
-      .withSymbolConfiguration(symCfg) ?? NSImage()
-    let btn = NSButton(image: img, target: self, action: #selector(buttonTapped))
-    btn.isBordered = false
-    btn.bezelStyle = .smallSquare
-    btn.contentTintColor = .white
-    btn.toolTip = String(localized: "More")
-    btn.imageScaling = .scaleProportionallyDown
-    btn.setContentHuggingPriority(.required, for: .horizontal)
-    self.moreButton = btn
-    addSubview(btn)
-    btn.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      btn.centerXAnchor.constraint(equalTo: centerXAnchor),
-      btn.centerYAnchor.constraint(equalTo: centerYAnchor),
-    ])
-
-    // Fixed pill size.
-    widthAnchor.constraint(equalToConstant: 44).isActive = true
-    heightAnchor.constraint(equalToConstant: 28).isActive = true
-  }
-
-  required init?(coder: NSCoder) { fatalError() }
-
-  // MARK: hover tracking
-
-  override func updateTrackingAreas() {
-    super.updateTrackingAreas()
-    if let t = hoverTracking { removeTrackingArea(t) }
-    let t = NSTrackingArea(
-      rect: .zero,
-      options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
-      owner: self,
-      userInfo: nil
-    )
-    addTrackingArea(t)
-    hoverTracking = t
-  }
-
-  override func mouseEntered(with event: NSEvent) {
-    hoverTimer?.invalidate()
-    hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { [weak self] _ in
-      guard let self, let btn = self.moreButton else { return }
-      Task { @MainActor in self.onMore(btn) }
-    }
-  }
-
-  override func mouseExited(with event: NSEvent) {
-    hoverTimer?.invalidate()
-    hoverTimer = nil
-  }
-
-  @objc private func buttonTapped() {
-    guard let btn = moreButton else { return }
-    onMore(btn)
   }
 }
 

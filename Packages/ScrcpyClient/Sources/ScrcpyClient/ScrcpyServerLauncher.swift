@@ -27,7 +27,7 @@ public struct ScrcpyOptions: Sendable {
   public var screenOffTimeoutMs: Int
 
   public init(
-    videoBitRate: Int = 4_000_000,
+    videoBitRate: Int = 8_000_000,
     maxFps: Int = 60,
     videoCodec: String = "h265",
     audioCodec: String = "opus",

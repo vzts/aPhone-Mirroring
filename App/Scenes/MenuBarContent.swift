@@ -3,90 +3,176 @@ import AppKit
 import DeviceDiscovery
 import SharedModels
 
+/// Menu bar extra: who's connected, one click to mirror, and the app's few
+/// global actions. Laid out like Control Center modules so it reads as part
+/// of macOS rather than a custom popover.
 struct MenuBarContent: View {
   @EnvironmentObject var monitor: DeviceMonitor
-  @Environment(\.openWindow) private var openWindow
   @Environment(\.openSettings) private var openSettings
 
+  private var online: [Device] { monitor.devices.filter { $0.state == .online } }
+
   var body: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      header; Divider()
-      if monitor.devices.contains(where: { $0.state == .online }) { deviceList } else { emptyState }
-      Divider()
-      Button { NSApp.activate(ignoringOtherApps: true); openWindow(id: WindowID.pairing) } label: { Label("Add Wireless Device…", systemImage: "wifi.router") }.buttonStyle(.plain)
-      Button { openSettings() } label: { Label("Settings…", systemImage: "gearshape") }.buttonStyle(.plain)
-      Divider()
-      Button(role: .destructive) { NSApp.terminate(nil) } label: { Label("Quit macDros", systemImage: "power") }.buttonStyle(.plain).keyboardShortcut("q", modifiers: [.command])
+    VStack(alignment: .leading, spacing: 0) {
+      header
+        .padding(.horizontal, 14)
+        .padding(.top, 14)
+        .padding(.bottom, 12)
+
+      Group {
+        if online.isEmpty {
+          emptyState
+        } else {
+          VStack(spacing: 6) {
+            ForEach(online) { MenuDeviceCard(device: $0) }
+          }
+        }
+      }
+      .padding(.horizontal, 10)
+
+      Divider().padding(.vertical, 8).padding(.horizontal, 14)
+
+      VStack(spacing: 0) {
+        MenuRow(title: "Connect a Phone…", symbol: "plus.circle") {
+          SessionCoordinator.shared.showConnectWindow()
+        }
+        MenuRow(title: "Settings…", symbol: "gearshape", shortcut: "⌘,") {
+          NSApp.activate(ignoringOtherApps: true)
+          openSettings()
+        }
+        MenuRow(title: "Quit Droid Mirroring", symbol: "power", shortcut: "⌘Q") {
+          NSApp.terminate(nil)
+        }
+        .keyboardShortcut("q", modifiers: .command)
+      }
+      .padding(.horizontal, 6)
+      .padding(.bottom, 8)
     }
-    .padding(.horizontal, 12).padding(.vertical, 10).frame(width: 280)
+    .frame(width: 300)
   }
 
   private var header: some View {
-    HStack(spacing: 8) {
-      Image(systemName: "iphone.gen3").font(.title3).foregroundStyle(.tint)
+    HStack(spacing: 10) {
+      Image(nsImage: NSApp.applicationIconImage)
+        .resizable()
+        .frame(width: 30, height: 30)
       VStack(alignment: .leading, spacing: 1) {
-        Text("macDros").font(.headline)
-        let count = monitor.devices.filter { $0.state == .online }.count
-        Text(count == 0 ? "no devices" : "\(count) device\(count == 1 ? "" : "s") online")
-          .font(.caption2.monospaced()).foregroundStyle(.secondary)
+        Text(verbatim: "Droid Mirroring").font(.headline)
+        Text(statusText).font(.caption).foregroundStyle(.secondary)
       }
+      Spacer()
     }
   }
 
-  private var deviceList: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      ForEach(monitor.devices.filter { $0.state == .online }) { device in MenuDeviceRow(device: device) }
+  private var statusText: String {
+    switch online.count {
+    case 0: return String(localized: "No phone connected")
+    case 1: return String(localized: "1 phone connected")
+    default: return String(localized: "\(online.count) phones connected")
     }
   }
 
   private var emptyState: some View {
-    HStack(spacing: 8) {
-      Image(systemName: "iphone.slash").foregroundStyle(.secondary)
-      Text("No device connected").font(.callout).foregroundStyle(.secondary)
-    }.padding(.vertical, 4)
+    VStack(spacing: 10) {
+      Image(systemName: "iphone.gen3.slash")
+        .font(.system(size: 26))
+        .foregroundStyle(.secondary)
+      Text("Turn on Wireless debugging on your phone, or plug it in with USB debugging on.")
+        .font(.callout)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+      Button("Connect a Phone…") { SessionCoordinator.shared.showConnectWindow() }
+        .primaryButtonStyle()
+        .controlSize(.regular)
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity)
+    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
   }
 }
 
-private struct MenuDeviceRow: View {
+private struct MenuDeviceCard: View {
   let device: Device
-  @State private var showMenu = false
-  @State private var hoverTask: Task<Void, Never>?
 
   var body: some View {
-    HStack(spacing: 8) {
-      Image(systemName: device.transport == .wifi ? "wifi" : "cable.connector").foregroundStyle(.tint)
-      VStack(alignment: .leading, spacing: 1) {
-        Text(device.model.isEmpty ? device.id : device.model).font(.callout)
-        Text("\(device.manufacturer.isEmpty ? "Android" : device.manufacturer) · SDK \(device.androidSDK)").font(.caption2.monospaced()).foregroundStyle(.secondary)
+    HStack(spacing: 10) {
+      Image(systemName: "iphone.gen3")
+        .font(.title2)
+        .foregroundStyle(.tint)
+        .frame(width: 26)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(device.displayName)
+          .font(.callout.weight(.semibold))
+          .lineLimit(1)
+        HStack(spacing: 4) {
+          Image(systemName: device.transport == .usb ? "cable.connector" : "wifi")
+          Text(androidVersionName(sdk: device.androidSDK))
+        }
+        .lineLimit(1)
+        .font(.caption)
+        .foregroundStyle(.secondary)
       }
-      Spacer()
-      if device.transport == .wifi {
-        Button {
-          Task { await SessionCoordinator.shared.disconnectWirelessDevice(for: device) }
-        } label: {
-          Image(systemName: "eject.circle").foregroundStyle(.secondary)
-        }
-        .buttonStyle(.plain).fixedSize()
-        .help("Disconnect")
+      Spacer(minLength: 6)
+      Button("Mirror") {
+        Task { await SessionCoordinator.shared.startMirror(for: device) }
       }
-      Button { showMenu.toggle() } label: { Image(systemName: "ellipsis.circle") }.buttonStyle(.plain).fixedSize()
-        .onHover { hovering in
-          hoverTask?.cancel()
-          if hovering { hoverTask = Task { try? await Task.sleep(nanoseconds: 300_000_000); if !Task.isCancelled { await MainActor.run { showMenu = true } } } }
-          else { hoverTask = Task { try? await Task.sleep(nanoseconds: 400_000_000); if !Task.isCancelled { await MainActor.run { showMenu = false } } } }
+      .primaryButtonStyle()
+      .controlSize(.small)
+      Menu {
+        Button("Files…") { SessionCoordinator.shared.openFiles(for: device) }
+        if device.supportsFreeform {
+          Button("Desktop Mode…") { Task { await SessionCoordinator.shared.openDesktop(for: device) } }
         }
-        .popover(isPresented: $showMenu, arrowEdge: .trailing) {
-          VStack(alignment: .leading, spacing: 4) {
-            Button { showMenu = false; Task { await SessionCoordinator.shared.startMirror(for: device) } } label: { Label("Mirror", systemImage: "rectangle.on.rectangle") }.buttonStyle(.plain)
-            Button { showMenu = false; SessionCoordinator.shared.openFiles(for: device) } label: { Label("Files", systemImage: "folder") }.buttonStyle(.plain)
-            if device.supportsFreeform { Button { showMenu = false; Task { await SessionCoordinator.shared.openDesktop(for: device) } } label: { Label("Desktop", systemImage: "display") }.buttonStyle(.plain) }
-          }
-          .padding(10)
-          .onHover { hovering in if !hovering { hoverTask = Task { try? await Task.sleep(nanoseconds: 300_000_000); if !Task.isCancelled { await MainActor.run { showMenu = false } } } } }
+        if device.transport == .wifi {
+          Divider()
+          Button("Disconnect") { Task { await SessionCoordinator.shared.disconnectWirelessDevice(for: device) } }
         }
+      } label: {
+        Image(systemName: "ellipsis")
+      }
+      .menuStyle(.button)
+      .menuIndicator(.hidden)
+      .buttonStyle(.borderless)
+      .fixedSize()
+      .help(Text("More"))
     }
-    .padding(.horizontal, 8).padding(.vertical, 6)
-    .background(.background.secondary, in: RoundedRectangle(cornerRadius: 6))
+    .padding(.horizontal, 10)
+    .padding(.vertical, 9)
+    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    .contentShape(Rectangle())
+    .help(Text(verbatim: "\(device.modelName) · \(device.id)"))
     .onTapGesture(count: 2) { Task { await SessionCoordinator.shared.startMirror(for: device) } }
+  }
+}
+
+/// Full-width row with a hover highlight, like a native menu item.
+private struct MenuRow: View {
+  let title: LocalizedStringKey
+  let symbol: String
+  var shortcut: String? = nil
+  let action: () -> Void
+  @State private var hovering = false
+
+  var body: some View {
+    Button(action: action) {
+      HStack(spacing: 8) {
+        Image(systemName: symbol)
+          .frame(width: 18)
+          .foregroundStyle(.secondary)
+        Text(title)
+        Spacer()
+        if let shortcut {
+          Text(verbatim: shortcut).foregroundStyle(.tertiary)
+        }
+      }
+      .font(.callout)
+      .padding(.horizontal, 8)
+      .padding(.vertical, 5)
+      .background(hovering ? Color.primary.opacity(0.1) : .clear, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .onHover { hovering = $0 }
   }
 }

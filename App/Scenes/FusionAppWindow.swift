@@ -124,9 +124,9 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
                itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
                willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
     switch itemIdentifier {
-    case ToolbarID.screenshot: return makeItem(itemIdentifier, label: "Screenshot", symbol: "camera", action: #selector(takeScreenshot))
-    case ToolbarID.record:     return makeItem(itemIdentifier, label: "Record", symbol: "record.circle", action: #selector(toggleRecord))
-    case ToolbarID.pin:        return makeItem(itemIdentifier, label: "Pin", symbol: "pin", action: #selector(togglePin))
+    case ToolbarID.screenshot: return makeItem(itemIdentifier, label: String(localized: "Take Screenshot"), symbol: "camera", action: #selector(takeScreenshot))
+    case ToolbarID.record:     return makeItem(itemIdentifier, label: String(localized: "Record"), symbol: "record.circle", action: #selector(toggleRecord))
+    case ToolbarID.pin:        return makeItem(itemIdentifier, label: String(localized: "Keep Window on Top"), symbol: "pin", action: #selector(togglePin))
     default: return nil
     }
   }
@@ -147,13 +147,9 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
 
   @objc private func takeScreenshot() {
     guard let buffer = renderer.lastPixelBuffer else { return }
-    let dir = pictureRoot()
-    let stamp = ISO8601DateFormatter().string(from: Date())
-      .replacingOccurrences(of: ":", with: "-")
-    let url = dir.appendingPathComponent("Screenshot-\(stamp).png")
+    let url = ScreenshotLocation.newFileURL(source: appLabel)
     do {
       try Screenshotter.savePNG(pixelBuffer: buffer, to: url)
-      NSWorkspace.shared.activateFileViewerSelecting([url])
     } catch {
       showAlert(error)
     }
@@ -230,13 +226,6 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
 
   // MARK: helpers
 
-  private func pictureRoot() -> URL {
-    let base = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first
-      ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
-    let dir = base.appendingPathComponent("DroidMirroring").appendingPathComponent(appLabel)
-    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    return dir
-  }
 
   private func movieRoot() -> URL {
     let base = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
@@ -278,12 +267,12 @@ private struct FusionWindowContent: View {
         Image(systemName: "display").foregroundStyle(.tint)
         Text(status.deviceName.isEmpty ? "Android" : status.deviceName)
           .font(.caption.weight(.medium))
-        Text("·").foregroundStyle(.tertiary)
-        Text(status.resolution).font(.caption.monospacedDigit())
+        Text(verbatim: "·").foregroundStyle(.tertiary)
+        Text(verbatim: status.resolution).font(.caption.monospacedDigit())
           .foregroundStyle(.secondary)
         if status.displayId >= 0 {
-          Text("·").foregroundStyle(.tertiary)
-          Text("display #\(status.displayId)").font(.caption.monospacedDigit())
+          Text(verbatim: "·").foregroundStyle(.tertiary)
+          Text("Display \(status.displayId)").font(.caption.monospacedDigit())
             .foregroundStyle(.secondary)
         }
         Spacer()
