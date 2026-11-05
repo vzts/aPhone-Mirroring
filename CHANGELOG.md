@@ -2,6 +2,16 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.0.6] - 2026-11-06
+
+### Fixed
+- A phone that only mirrors with Android's software encoder now has
+  sound from the first session, not only after a relaunch.
+
+### Changed
+- The USB screen also suggests restarting the phone and turning USB
+  debugging off and on when the phone never asks to allow the Mac.
+
 ## [v2.0.5] - 2026-11-06
 
 ### Fixed
