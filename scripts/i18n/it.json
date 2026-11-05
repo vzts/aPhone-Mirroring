@@ -165,5 +165,10 @@
 "Usa un cavo dati, non uno solo di ricarica, e tieni il telefono sbloccato.",
 "Su Samsung, disattiva **Auto Blocker** in **Impostazioni › Sicurezza e privacy**.",
 "In **Opzioni sviluppatore**, tocca **Revoca autorizzazioni debug USB**, poi ricollega il cavo.",
-"Ancora niente? Riavvia il telefono, poi disattiva e riattiva il debug USB."
+"Ancora niente? Riavvia il telefono, poi disattiva e riattiva il debug USB.",
+"Notifiche",
+"Mostra le notifiche del telefono su questo Mac",
+"Le nuove notifiche di un telefono collegato compaiono nel Centro Notifiche e, facendo clic su una, si apre la sua app sul telefono. Restano su questo Mac.",
+"Consenti le notifiche di %@ in Impostazioni di Sistema.",
+"Apri impostazioni Notifiche…"
 ]

@@ -60,6 +60,14 @@ public actor ADBClient {
     return String(data: data, encoding: .utf8) ?? ""
   }
 
+  /// Starts `command` and hands back its open stream, for output that keeps
+  /// coming (`logcat`). Closing the connection ends the command.
+  public func openShell(_ command: String, serial: String) async throws -> ADBConnection {
+    let conn = try await attach(to: serial)
+    try await conn.sendCommand("shell:\(command)")
+    return conn
+  }
+
   public func forward(localPort: Int, remoteUnixSocket: String, serial: String) async throws {
     let conn = ADBConnection(host: config.serverHost, port: config.serverPort)
     try await conn.open()

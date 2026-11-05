@@ -165,3 +165,8 @@
 "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "Samsung では**設定 › セキュリティとプライバシー**で**自動ブロッカー**をオフにします。";
 "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "**開発者向けオプション**で**USB デバッグの承認を取り消す**をタップしてから、ケーブルを接続し直します。";
 "Still nothing? Restart the phone, then turn USB debugging off and on again." = "それでも表示されない場合は、スマートフォンを再起動してから USB デバッグをオフにして、もう一度オンにします。";
+"Notifications" = "通知";
+"Show phone notifications on this Mac" = "スマートフォンの通知をこの Mac に表示";
+"New notifications from a connected phone appear in Notification Center, and clicking one opens its app on the phone. They stay on this Mac." = "接続中のスマートフォンの新しい通知が通知センターに表示され、クリックするとスマートフォンでそのアプリが開きます。通知はこの Mac の外には送られません。";
+"Allow notifications for %@ in System Settings." = "システム設定で %@ の通知を許可してください。";
+"Open Notification Settings…" = "通知設定を開く…";

@@ -165,5 +165,10 @@
 "Verwende ein Datenkabel statt eines reinen Ladekabels und lass das Telefon entsperrt.",
 "Bei Samsung: Deaktiviere **Auto Blocker** unter **Einstellungen › Sicherheit und Datenschutz**.",
 "Tippe in den **Entwickleroptionen** auf **USB-Debugging-Autorisierungen aufheben** und stecke das Kabel neu ein.",
-"Immer noch nichts? Starte das Telefon neu und schalte USB-Debugging aus und wieder ein."
+"Immer noch nichts? Starte das Telefon neu und schalte USB-Debugging aus und wieder ein.",
+"Mitteilungen",
+"Mitteilungen des Telefons auf diesem Mac zeigen",
+"Neue Mitteilungen eines verbundenen Telefons erscheinen in der Mitteilungszentrale; ein Klick öffnet die App auf dem Telefon. Sie bleiben auf diesem Mac.",
+"Erlaube Mitteilungen für %@ in den Systemeinstellungen.",
+"Mitteilungseinstellungen öffnen …"
 ]

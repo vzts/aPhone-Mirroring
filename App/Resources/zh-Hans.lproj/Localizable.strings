@@ -165,3 +165,8 @@
 "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "三星手机请在**设置 › 安全和隐私**中关闭**Auto Blocker**。";
 "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "在**开发者选项**中点按**撤消 USB 调试授权**，然后重新插上数据线。";
 "Still nothing? Restart the phone, then turn USB debugging off and on again." = "仍然没有？请重启手机，然后关闭再重新打开 USB 调试。";
+"Notifications" = "通知";
+"Show phone notifications on this Mac" = "在这台 Mac 上显示手机通知";
+"New notifications from a connected phone appear in Notification Center, and clicking one opens its app on the phone. They stay on this Mac." = "已连接手机的新通知会显示在通知中心，点按通知会在手机上打开对应的 App。通知只保留在这台 Mac 上。";
+"Allow notifications for %@ in System Settings." = "请在“系统设置”中允许 %@ 发送通知。";
+"Open Notification Settings…" = "打开“通知”设置…";

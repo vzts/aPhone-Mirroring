@@ -25,6 +25,8 @@ struct SettingsView: View {
 private struct GeneralSettings: View {
   @AppStorage("showMenuBarIcon") private var showMenuBarIcon = true
   @AppStorage("mirror.autoOnConnect") private var autoMirror = true
+  @AppStorage(PhoneNotificationBridge.enabledKey) private var forwardNotifications = false
+  @State private var notificationsDenied = false
   @State private var loginStatus = SMAppService.mainApp.status
   @State private var loginError: String?
 
@@ -71,6 +73,33 @@ private struct GeneralSettings: View {
         Text("Connection")
       } footer: {
         Text("Phones you've mirrored before open on their own as soon as they connect.")
+      }
+
+      Section {
+        Toggle("Show phone notifications on this Mac", isOn: $forwardNotifications)
+          .onChange(of: forwardNotifications) { PhoneNotificationBridge.shared.settingChanged() }
+        if forwardNotifications && notificationsDenied {
+          LabeledContent {
+            Button("Open Notification Settings…") {
+              let id = Bundle.main.bundleIdentifier ?? ""
+              if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(id)") {
+                NSWorkspace.shared.open(url)
+              }
+            }
+          } label: {
+            Text("Allow notifications for \(AppInfo.name) in System Settings.")
+              .foregroundStyle(.secondary)
+          }
+        }
+      } header: {
+        Text("Notifications")
+      } footer: {
+        Text("New notifications from a connected phone appear in Notification Center, and clicking one opens its app on the phone. They stay on this Mac.")
+      }
+      .task(id: forwardNotifications) {
+        // Waits for the answer to macOS's prompt, so a "Don't Allow" shows the hint at once.
+        guard forwardNotifications else { notificationsDenied = false; return }
+        notificationsDenied = await PhoneNotificationBridge.shared.askForPermission() == .denied
       }
 
       LanguageSection()

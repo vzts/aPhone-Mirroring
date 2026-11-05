@@ -7,6 +7,7 @@ let package = Package(
   products: [
     .library(name: "ADBKit", targets: ["ADBKit"]),
     .executable(name: "sync-smoke", targets: ["SyncSmoke"]),
+    .executable(name: "notification-smoke", targets: ["NotificationSmoke"]),
   ],
   dependencies: [
     .package(path: "../SharedModels"),
@@ -19,6 +20,10 @@ let package = Package(
     .executableTarget(
       name: "SyncSmoke",
       dependencies: ["ADBKit", "SharedModels"]
+    ),
+    .executableTarget(
+      name: "NotificationSmoke",
+      dependencies: ["ADBKit"]
     ),
     .testTarget(
       name: "ADBKitTests",

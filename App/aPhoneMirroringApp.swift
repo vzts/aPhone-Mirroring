@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 import AppKit
 import Combine
 import os
@@ -136,6 +137,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   func applicationDidFinishLaunching(_ notification: Notification) {
     AppInfo.migrateSettingsFromDroidMirroring()
     AppLanguage.captureLaunchState()
+    // Clicks on phone notifications shown in Notification Center land here.
+    UNUserNotificationCenter.current().delegate = PhoneNotificationBridge.shared
     SessionCoordinator.shared.monitor = monitor
     // A phone on USB and Wi-Fi at once is listed by the connection it was mirrored over.
     monitor.isPreferredSerial = { SessionCoordinator.shared.isTrusted($0) }

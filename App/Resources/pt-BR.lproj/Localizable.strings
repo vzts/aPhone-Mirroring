@@ -165,3 +165,8 @@
 "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "No Samsung, desative o **Bloqueador automático** em **Configurações › Segurança e privacidade**.";
 "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "Em **Opções do desenvolvedor**, toque em **Revogar autorizações de depuração USB** e conecte o cabo de novo.";
 "Still nothing? Restart the phone, then turn USB debugging off and on again." = "Ainda nada? Reinicie o telefone e depois desative e ative de novo a depuração USB.";
+"Notifications" = "Notificações";
+"Show phone notifications on this Mac" = "Mostrar as notificações do telefone neste Mac";
+"New notifications from a connected phone appear in Notification Center, and clicking one opens its app on the phone. They stay on this Mac." = "As notificações novas de um telefone conectado aparecem na Central de Notificações, e clicar em uma abre o app no telefone. Elas ficam neste Mac.";
+"Allow notifications for %@ in System Settings." = "Permita as notificações do %@ nos Ajustes do Sistema.";
+"Open Notification Settings…" = "Abrir ajustes de Notificações…";

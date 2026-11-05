@@ -27,6 +27,10 @@ Developer options appear after tapping **Build number** seven times in **Setting
 
 If mirroring won't start, the alert includes the phone's own reason; please add it to a bug report.
 
+## Notifications
+
+Turn on **Settings › General › Show phone notifications on this Mac** to see a connected phone's notifications in Notification Center. Updates replace them, dismissing one on the phone removes it from the Mac, and clicking one opens its app on the phone. Nothing is installed on the phone, and notifications stay on the Mac.
+
 ## Build
 
 ```sh

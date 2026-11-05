@@ -89,6 +89,7 @@ final class SessionCoordinator: ObservableObject {
   /// Also tears down Mirror/Files for devices that just disappeared, and
   /// toggles the "no device connected" placeholder window.
   func autoMirrorIfNeeded(devices: [Device]) {
+    PhoneNotificationBridge.shared.sync(devices: devices)
     let online = devices.filter { $0.state == .online }
     let onlineSerials = Set(online.map(\.id))
     lastOnlineSerials = onlineSerials

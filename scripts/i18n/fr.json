@@ -165,5 +165,10 @@
 "Utilisez un câble de données, pas un câble de charge seule, et gardez le téléphone déverrouillé.",
 "Sur Samsung, désactivez **Auto Blocker** dans **Paramètres › Sécurité et confidentialité**.",
 "Dans **Options pour les développeurs**, touchez **Révoquer les autorisations de débogage USB**, puis rebranchez le câble.",
-"Toujours rien ? Redémarrez le téléphone, puis désactivez et réactivez le débogage USB."
+"Toujours rien ? Redémarrez le téléphone, puis désactivez et réactivez le débogage USB.",
+"Notifications",
+"Afficher les notifications du téléphone sur ce Mac",
+"Les nouvelles notifications d’un téléphone connecté apparaissent dans le centre de notifications ; cliquer sur l’une d’elles ouvre son app sur le téléphone. Elles restent sur ce Mac.",
+"Autorisez les notifications de %@ dans Réglages Système.",
+"Ouvrir les réglages des notifications…"
 ]

@@ -165,5 +165,10 @@
 "Usa un cable de datos, no uno solo de carga, y mantén el teléfono desbloqueado.",
 "En Samsung, desactiva **Bloqueador automático** en **Ajustes › Seguridad y privacidad**.",
 "En **Opciones para desarrolladores**, toca **Revocar autorizaciones de depuración USB** y vuelve a conectar el cable.",
-"¿Sigue sin aparecer? Reinicia el teléfono y desactiva y vuelve a activar la depuración USB."
+"¿Sigue sin aparecer? Reinicia el teléfono y desactiva y vuelve a activar la depuración USB.",
+"Notificaciones",
+"Mostrar las notificaciones del teléfono en este Mac",
+"Las notificaciones nuevas de un teléfono conectado aparecen en el Centro de notificaciones y, al hacer clic en una, se abre su app en el teléfono. Se quedan en este Mac.",
+"Permite las notificaciones de %@ en Ajustes del Sistema.",
+"Abrir ajustes de notificaciones…"
 ]
