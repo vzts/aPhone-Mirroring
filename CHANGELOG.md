@@ -2,6 +2,17 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.1.0] - 2026-11-06
+
+### Added
+- Phone notifications in Notification Center. Turn on Settings › General ›
+  Show phone notifications on this Mac: a connected phone's new
+  notifications appear with the sender, the app and the message; updates
+  replace them, dismissing one on the phone removes it from the Mac, and
+  clicking one opens its app on the phone. Silent and ongoing
+  notifications, and what Do Not Disturb holds back, stay on the phone.
+  Nothing is installed on the phone, and notifications stay on the Mac.
+
 ## [v2.0.6] - 2026-11-06
 
 ### Fixed
