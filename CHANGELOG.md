@@ -2,6 +2,14 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.2.1] - 2026-11-06
+
+### Changed
+- No more asking whether to check for updates. The app checks quietly
+  and shows a window only when a new version is out; tick "Don't tell me
+  about new versions" there to stop it (Settings › Advanced turns it back
+  on).
+
 ## [v2.2.0] - 2026-11-06
 
 ### Added
