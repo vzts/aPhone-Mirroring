@@ -80,8 +80,6 @@
 "No phone connected" = "Nessun telefono connesso";
 "No wireless ADB service found on this network." = "Nessun servizio ADB wireless trovato su questa rete.";
 "OK" = "OK";
-"On your phone, open **Settings › About phone** and tap **Build number** 7 times." = "Sul telefono, apri **Impostazioni › Informazioni sul telefono** e tocca **Numero build** 7 volte.";
-"On your phone, open **Settings › Developer options › Wireless debugging**." = "Sul telefono, apri **Impostazioni › Opzioni sviluppatore › Debug wireless**.";
 "On your phone: **Wireless debugging › Pair device with pairing code**." = "Sul telefono: **Debug wireless › Accoppia dispositivo con codice di accoppiamento**.";
 "Open Login Items…" = "Apri Elementi login…";
 "Open at login" = "Apri al login";
@@ -126,7 +124,6 @@
 "Stop Recording" = "Interrompi registrazione";
 "Take Screenshot" = "Scatta istantanea";
 "Tap **Allow** when your phone asks." = "Tocca **Consenti** quando il telefono lo chiede.";
-"Tap **Pair device with QR code** and scan this code." = "Tocca **Accoppia dispositivo con codice QR** e inquadra questo codice.";
 "Text you copy on either device can be pasted on the other, including passwords." = "Il testo copiato su un dispositivo si può incollare sull’altro, password comprese.";
 "Troubleshooting" = "Risoluzione dei problemi";
 "Try this if mirroring fails with a protocol error. It deletes old copies of the mirroring server from connected phones." = "Prova questa opzione se la duplicazione non riesce per un errore di protocollo. Elimina le vecchie copie del server di duplicazione dai telefoni connessi.";
@@ -160,3 +157,10 @@
 "Restart %@ to use the new language." = "Riavvia %@ per usare la nuova lingua.";
 "Show Navigation Buttons" = "Mostra pulsanti di navigazione";
 "Hide Navigation Buttons" = "Nascondi pulsanti di navigazione";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "Attiva una volta le **Opzioni sviluppatore**: in **Impostazioni › Informazioni sul telefono**, tocca **Numero build** 7 volte. Su Samsung, apri prima **Informazioni software**.";
+"Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "Apri **Impostazioni › Opzioni sviluppatore**, attiva **Debug wireless** e tocca **Accoppia dispositivo con codice QR**.";
+"Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "Inquadra questo codice. Il telefono e questo Mac devono essere sulla stessa rete Wi-Fi.";
+"No prompt on your phone?" = "Nessuna richiesta sul telefono?";
+"Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "Usa un cavo dati, non uno solo di ricarica, e tieni il telefono sbloccato.";
+"On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "Su Samsung, disattiva **Auto Blocker** in **Impostazioni › Sicurezza e privacy**.";
+"In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "In **Opzioni sviluppatore**, tocca **Revoca autorizzazioni debug USB**, poi ricollega il cavo.";

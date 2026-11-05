@@ -80,8 +80,6 @@
 "No phone connected" = "未连接手机";
 "No wireless ADB service found on this network." = "在此网络上未找到无线 ADB 服务。";
 "OK" = "好";
-"On your phone, open **Settings › About phone** and tap **Build number** 7 times." = "在手机上打开**设置 › 关于手机**，连续点按**版本号** 7 次。";
-"On your phone, open **Settings › Developer options › Wireless debugging**." = "在手机上打开**设置 › 开发者选项 › 无线调试**。";
 "On your phone: **Wireless debugging › Pair device with pairing code**." = "在手机上：**无线调试 › 使用配对码配对设备**。";
 "Open Login Items…" = "打开“登录项”…";
 "Open at login" = "登录时打开";
@@ -126,7 +124,6 @@
 "Stop Recording" = "停止录制";
 "Take Screenshot" = "截屏";
 "Tap **Allow** when your phone asks." = "手机出现提示时，点按**允许**。";
-"Tap **Pair device with QR code** and scan this code." = "点按**使用二维码配对设备**，然后扫描此代码。";
 "Text you copy on either device can be pasted on the other, including passwords." = "在任一设备上复制的文本都可以在另一台设备上粘贴，包括密码。";
 "Troubleshooting" = "故障排除";
 "Try this if mirroring fails with a protocol error. It deletes old copies of the mirroring server from connected phones." = "如果镜像因协议错误失败，请试试这个。它会删除已连接手机上的旧版镜像服务端文件。";
@@ -160,3 +157,10 @@
 "Restart %@ to use the new language." = "重新启动 %@ 以使用新语言。";
 "Show Navigation Buttons" = "显示导航按钮";
 "Hide Navigation Buttons" = "隐藏导航按钮";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "首次需打开**开发者选项**：在**设置 › 关于手机**中，连续点按**版本号** 7 次。三星手机需先打开**软件信息**。";
+"Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "打开**设置 › 开发者选项**，开启**无线调试**，然后点按**使用二维码配对设备**。";
+"Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "扫描此代码。手机和这台 Mac 需要连接同一个 Wi-Fi。";
+"No prompt on your phone?" = "手机上没有出现提示？";
+"Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "请使用支持数据传输的线缆（而非仅充电线），并保持手机解锁。";
+"On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "三星手机请在**设置 › 安全和隐私**中关闭**Auto Blocker**。";
+"In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "在**开发者选项**中点按**撤消 USB 调试授权**，然后重新插上数据线。";

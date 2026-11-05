@@ -80,8 +80,6 @@
 "No phone connected" = "연결된 휴대폰 없음";
 "No wireless ADB service found on this network." = "이 네트워크에서 무선 ADB 서비스를 찾지 못했습니다.";
 "OK" = "확인";
-"On your phone, open **Settings › About phone** and tap **Build number** 7 times." = "휴대폰에서 **설정 › 휴대전화 정보**를 열고 **빌드 번호**를 7번 탭합니다.";
-"On your phone, open **Settings › Developer options › Wireless debugging**." = "휴대폰에서 **설정 › 개발자 옵션 › 무선 디버깅**을 엽니다.";
 "On your phone: **Wireless debugging › Pair device with pairing code**." = "휴대폰에서: **무선 디버깅 › 페어링 코드로 기기 페어링**.";
 "Open Login Items…" = "로그인 항목 열기…";
 "Open at login" = "로그인 시 열기";
@@ -126,7 +124,6 @@
 "Stop Recording" = "녹화 중지";
 "Take Screenshot" = "스크린샷 찍기";
 "Tap **Allow** when your phone asks." = "휴대폰에 확인 창이 뜨면 **허용**을 탭합니다.";
-"Tap **Pair device with QR code** and scan this code." = "**QR 코드로 기기 페어링**을 탭하고 이 코드를 스캔합니다.";
 "Text you copy on either device can be pasted on the other, including passwords." = "한쪽에서 복사한 텍스트를 다른 쪽에 붙여 넣을 수 있습니다. 비밀번호도 포함됩니다.";
 "Troubleshooting" = "문제 해결";
 "Try this if mirroring fails with a protocol error. It deletes old copies of the mirroring server from connected phones." = "미러링이 프로토콜 오류로 실패할 때 써 보세요. 연결된 휴대폰에서 예전 미러링 서버 파일을 지웁니다.";
@@ -160,3 +157,10 @@
 "Restart %@ to use the new language." = "새 언어를 적용하려면 %@을 재시작하세요.";
 "Show Navigation Buttons" = "내비게이션 버튼 보기";
 "Hide Navigation Buttons" = "내비게이션 버튼 가리기";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "처음 한 번만 **개발자 옵션**을 켭니다: **설정 › 휴대전화 정보**에서 **빌드 번호**를 7번 탭합니다. 삼성은 **소프트웨어 정보**를 먼저 엽니다.";
+"Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "**설정 › 개발자 옵션**에서 **무선 디버깅**을 켜고 **QR 코드로 기기 페어링**을 탭합니다.";
+"Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "이 코드를 스캔합니다. 휴대폰과 이 Mac은 같은 Wi-Fi에 연결되어 있어야 합니다.";
+"No prompt on your phone?" = "휴대폰에 확인 창이 안 뜨나요?";
+"Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "충전 전용이 아닌 데이터 전송용 케이블을 쓰고, 휴대폰 잠금을 풀어 둡니다.";
+"On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "삼성은 **설정 › 보안 및 개인정보 보호**에서 **자동 차단**을 끕니다.";
+"In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "**개발자 옵션**에서 **USB 디버깅 권한 승인 취소**를 탭한 뒤 케이블을 다시 꽂습니다.";

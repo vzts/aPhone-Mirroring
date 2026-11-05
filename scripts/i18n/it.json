@@ -81,8 +81,6 @@
 "Nessun telefono connesso",
 "Nessun servizio ADB wireless trovato su questa rete.",
 "OK",
-"Sul telefono, apri **Impostazioni › Informazioni sul telefono** e tocca **Numero build** 7 volte.",
-"Sul telefono, apri **Impostazioni › Opzioni sviluppatore › Debug wireless**.",
 "Sul telefono: **Debug wireless › Accoppia dispositivo con codice di accoppiamento**.",
 "Apri Elementi login…",
 "Apri al login",
@@ -127,7 +125,6 @@
 "Interrompi registrazione",
 "Scatta istantanea",
 "Tocca **Consenti** quando il telefono lo chiede.",
-"Tocca **Accoppia dispositivo con codice QR** e inquadra questo codice.",
 "Il testo copiato su un dispositivo si può incollare sull’altro, password comprese.",
 "Risoluzione dei problemi",
 "Prova questa opzione se la duplicazione non riesce per un errore di protocollo. Elimina le vecchie copie del server di duplicazione dai telefoni connessi.",
@@ -160,5 +157,12 @@
 "Riavvia ora",
 "Riavvia %@ per usare la nuova lingua.",
 "Mostra pulsanti di navigazione",
-"Nascondi pulsanti di navigazione"
+"Nascondi pulsanti di navigazione",
+"Attiva una volta le **Opzioni sviluppatore**: in **Impostazioni › Informazioni sul telefono**, tocca **Numero build** 7 volte. Su Samsung, apri prima **Informazioni software**.",
+"Apri **Impostazioni › Opzioni sviluppatore**, attiva **Debug wireless** e tocca **Accoppia dispositivo con codice QR**.",
+"Inquadra questo codice. Il telefono e questo Mac devono essere sulla stessa rete Wi-Fi.",
+"Nessuna richiesta sul telefono?",
+"Usa un cavo dati, non uno solo di ricarica, e tieni il telefono sbloccato.",
+"Su Samsung, disattiva **Auto Blocker** in **Impostazioni › Sicurezza e privacy**.",
+"In **Opzioni sviluppatore**, tocca **Revoca autorizzazioni debug USB**, poi ricollega il cavo."
 ]

@@ -81,8 +81,6 @@
 "Kein Telefon verbunden",
 "In diesem Netzwerk wurde kein kabelloser ADB-Dienst gefunden.",
 "OK",
-"Öffne auf dem Telefon **Einstellungen › Über das Telefon** und tippe 7-mal auf **Build-Nummer**.",
-"Öffne auf dem Telefon **Einstellungen › Entwickleroptionen › Kabelloses Debugging**.",
 "Auf dem Telefon: **Kabelloses Debugging › Gerät über Kopplungscode koppeln**.",
 "Anmeldeobjekte öffnen …",
 "Bei der Anmeldung öffnen",
@@ -127,7 +125,6 @@
 "Aufnahme stoppen",
 "Bildschirmfoto aufnehmen",
 "Tippe auf **Zulassen**, wenn das Telefon fragt.",
-"Tippe auf **Gerät über QR-Code koppeln** und scanne diesen Code.",
 "Text, den du auf einem Gerät kopierst, kannst du auf dem anderen einsetzen – auch Passwörter.",
 "Fehlerbehebung",
 "Probiere das, wenn die Synchronisierung mit einem Protokollfehler scheitert. Alte Kopien des Synchronisierungsservers werden von verbundenen Telefonen gelöscht.",
@@ -160,5 +157,12 @@
 "Jetzt neu starten",
 "Starte %@ neu, um die neue Sprache zu verwenden.",
 "Navigationstasten einblenden",
-"Navigationstasten ausblenden"
+"Navigationstasten ausblenden",
+"Aktiviere einmalig die **Entwickleroptionen**: Tippe unter **Einstellungen › Über das Telefon** 7-mal auf **Build-Nummer**. Bei Samsung öffnest du vorher **Softwareinformationen**.",
+"Öffne **Einstellungen › Entwickleroptionen**, aktiviere **Kabelloses Debugging** und tippe auf **Gerät über QR-Code koppeln**.",
+"Scanne diesen Code. Telefon und Mac müssen im selben WLAN sein.",
+"Keine Abfrage auf dem Telefon?",
+"Verwende ein Datenkabel statt eines reinen Ladekabels und lass das Telefon entsperrt.",
+"Bei Samsung: Deaktiviere **Auto Blocker** unter **Einstellungen › Sicherheit und Datenschutz**.",
+"Tippe in den **Entwickleroptionen** auf **USB-Debugging-Autorisierungen aufheben** und stecke das Kabel neu ein."
 ]

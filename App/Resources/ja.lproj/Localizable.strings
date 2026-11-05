@@ -80,8 +80,6 @@
 "No phone connected" = "接続されているスマートフォンはありません";
 "No wireless ADB service found on this network." = "このネットワークでワイヤレス ADB サービスが見つかりません。";
 "OK" = "OK";
-"On your phone, open **Settings › About phone** and tap **Build number** 7 times." = "スマートフォンで**設定 › デバイス情報**を開き、**ビルド番号**を 7 回タップします。";
-"On your phone, open **Settings › Developer options › Wireless debugging**." = "スマートフォンで**設定 › 開発者向けオプション › ワイヤレス デバッグ**を開きます。";
 "On your phone: **Wireless debugging › Pair device with pairing code**." = "スマートフォンで: **ワイヤレス デバッグ › ペア設定コードによるデバイスのペア設定**。";
 "Open Login Items…" = "ログイン項目を開く…";
 "Open at login" = "ログイン時に開く";
@@ -126,7 +124,6 @@
 "Stop Recording" = "録画を停止";
 "Take Screenshot" = "スクリーンショットを撮る";
 "Tap **Allow** when your phone asks." = "スマートフォンに確認が表示されたら**許可**をタップします。";
-"Tap **Pair device with QR code** and scan this code." = "**QR コードによるデバイスのペア設定**をタップして、このコードをスキャンします。";
 "Text you copy on either device can be pasted on the other, including passwords." = "どちらかでコピーしたテキストを、もう一方でペーストできます。パスワードも含まれます。";
 "Troubleshooting" = "トラブルシューティング";
 "Try this if mirroring fails with a protocol error. It deletes old copies of the mirroring server from connected phones." = "ミラーリングがプロトコルエラーで失敗するときに試してください。接続中のスマートフォンから古いミラーリングサーバのファイルを削除します。";
@@ -160,3 +157,10 @@
 "Restart %@ to use the new language." = "新しい言語を使うには %@を再起動してください。";
 "Show Navigation Buttons" = "ナビゲーションボタンを表示";
 "Hide Navigation Buttons" = "ナビゲーションボタンを非表示";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "**開発者向けオプション**を一度だけオンにします: **設定 › デバイス情報**で**ビルド番号**を 7 回タップします。Samsung では先に**ソフトウェア情報**を開きます。";
+"Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "**設定 › 開発者向けオプション**で**ワイヤレス デバッグ**をオンにし、**QR コードによるデバイスのペア設定**をタップします。";
+"Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "このコードをスキャンします。スマートフォンとこの Mac は同じ Wi-Fi に接続している必要があります。";
+"No prompt on your phone?" = "スマートフォンに確認が表示されませんか？";
+"Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "充電専用ではなくデータ通信に対応したケーブルを使い、スマートフォンのロックを解除しておきます。";
+"On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "Samsung では**設定 › セキュリティとプライバシー**で**自動ブロッカー**をオフにします。";
+"In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "**開発者向けオプション**で**USB デバッグの承認を取り消す**をタップしてから、ケーブルを接続し直します。";

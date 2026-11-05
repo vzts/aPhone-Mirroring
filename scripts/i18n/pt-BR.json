@@ -81,8 +81,6 @@
 "Nenhum telefone conectado",
 "Nenhum serviço ADB sem fio encontrado nesta rede.",
 "OK",
-"No telefone, abra **Configurações › Sobre o telefone** e toque em **Número da versão** 7 vezes.",
-"No telefone, abra **Configurações › Opções do desenvolvedor › Depuração por Wi-Fi**.",
 "No telefone: **Depuração por Wi-Fi › Parear o dispositivo com um código de pareamento**.",
 "Abrir Itens de Início…",
 "Abrir ao iniciar sessão",
@@ -127,7 +125,6 @@
 "Parar Gravação",
 "Fazer Captura de Tela",
 "Toque em **Permitir** quando o telefone pedir.",
-"Toque em **Parear o dispositivo com um código QR** e leia este código.",
 "O texto copiado em um dispositivo pode ser colado no outro, inclusive senhas.",
 "Solução de problemas",
 "Use isto se o espelhamento falhar com um erro de protocolo. Isso apaga cópias antigas do servidor de espelhamento dos telefones conectados.",
@@ -160,5 +157,12 @@
 "Reiniciar Agora",
 "Reinicie o %@ para usar o novo idioma.",
 "Mostrar Botões de Navegação",
-"Ocultar Botões de Navegação"
+"Ocultar Botões de Navegação",
+"Ative uma vez as **Opções do desenvolvedor**: em **Configurações › Sobre o telefone**, toque em **Número da versão** 7 vezes. No Samsung, abra antes **Informações de software**.",
+"Abra **Configurações › Opções do desenvolvedor**, ative a **Depuração por Wi-Fi** e toque em **Parear o dispositivo com um código QR**.",
+"Leia este código. O telefone e este Mac precisam estar na mesma rede Wi-Fi.",
+"O aviso não aparece no telefone?",
+"Use um cabo de dados, não um só de carregamento, e mantenha o telefone desbloqueado.",
+"No Samsung, desative o **Bloqueador automático** em **Configurações › Segurança e privacidade**.",
+"Em **Opções do desenvolvedor**, toque em **Revogar autorizações de depuração USB** e conecte o cabo de novo."
 ]

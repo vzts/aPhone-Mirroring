@@ -80,8 +80,6 @@
 "No phone connected" = "Нет подключенных телефонов";
 "No wireless ADB service found on this network." = "В этой сети не найдена служба беспроводного ADB.";
 "OK" = "ОК";
-"On your phone, open **Settings › About phone** and tap **Build number** 7 times." = "На телефоне откройте **Настройки › О телефоне** и коснитесь **Номер сборки** 7 раз.";
-"On your phone, open **Settings › Developer options › Wireless debugging**." = "На телефоне откройте **Настройки › Для разработчиков › Отладка по Wi-Fi**.";
 "On your phone: **Wireless debugging › Pair device with pairing code**." = "На телефоне: **Отладка по Wi-Fi › Подключить устройство с помощью кода подключения**.";
 "Open Login Items…" = "Открыть объекты входа…";
 "Open at login" = "Открывать при входе";
@@ -126,7 +124,6 @@
 "Stop Recording" = "Остановить запись";
 "Take Screenshot" = "Сделать снимок экрана";
 "Tap **Allow** when your phone asks." = "Коснитесь **Разрешить**, когда телефон спросит.";
-"Tap **Pair device with QR code** and scan this code." = "Коснитесь **Подключить устройство с помощью QR-кода** и отсканируйте этот код.";
 "Text you copy on either device can be pasted on the other, including passwords." = "Текст, скопированный на одном устройстве, можно вставить на другом, включая пароли.";
 "Troubleshooting" = "Устранение неполадок";
 "Try this if mirroring fails with a protocol error. It deletes old copies of the mirroring server from connected phones." = "Попробуйте это, если видеоповтор не запускается из-за ошибки протокола. С подключенных телефонов будут удалены старые копии сервера видеоповтора.";
@@ -160,3 +157,10 @@
 "Restart %@ to use the new language." = "Перезапустите %@, чтобы применить новый язык.";
 "Show Navigation Buttons" = "Показать кнопки навигации";
 "Hide Navigation Buttons" = "Скрыть кнопки навигации";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "Один раз включите раздел **Для разработчиков**: в **Настройки › О телефоне** коснитесь **Номер сборки** 7 раз. На Samsung сначала откройте **Сведения о ПО**.";
+"Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "Откройте **Настройки › Для разработчиков**, включите **Отладку по Wi-Fi** и коснитесь **Подключить устройство с помощью QR-кода**.";
+"Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "Отсканируйте этот код. Телефон и этот Mac должны быть в одной сети Wi-Fi.";
+"No prompt on your phone?" = "Запрос на телефоне не появляется?";
+"Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "Используйте кабель с передачей данных, а не только для зарядки, и не блокируйте телефон.";
+"On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "На Samsung отключите **Auto Blocker** в разделе **Настройки › Безопасность и конфиденциальность**.";
+"In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "В разделе **Для разработчиков** коснитесь **Отозвать доступ для отладки по USB** и снова подключите кабель.";

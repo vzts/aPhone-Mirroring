@@ -163,7 +163,7 @@ struct ConnectView: View {
           switch route {
           case .code(let preselected): CodeScreen(pairing: pairing, preselected: preselected, route: $route)
           case .manual: ManualScreen(pairing: pairing, route: $route)
-          case .usb, .home: USBScreen(route: $route)
+          case .usb, .home: USBScreen(monitor: monitor, route: $route)
           }
         }
       }
@@ -282,8 +282,9 @@ private struct HomeScreen: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityLabel(Text("Pairing QR code"))
       VStack(alignment: .leading, spacing: 10) {
-        StepRow(number: 1, text: "On your phone, open **Settings › Developer options › Wireless debugging**.")
-        StepRow(number: 2, text: "Tap **Pair device with QR code** and scan this code.")
+        StepRow(number: 1, text: "Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first.")
+        StepRow(number: 2, text: "Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**.")
+        StepRow(number: 3, text: "Scan this code. Your phone and this Mac need to be on the same Wi-Fi.")
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       Divider().opacity(0.5)
@@ -534,14 +535,21 @@ private struct LabeledField<Field: View>: View {
 // MARK: USB
 
 private struct USBScreen: View {
+  @ObservedObject var monitor: DeviceMonitor
   @Binding var route: ConnectRoute
+
+  private var usbPhones: [Device] { monitor.devices.filter { $0.transport == .usb } }
+  /// Plugged in, but this Mac isn't allowed yet: the phone is showing (or
+  /// should be showing) the Allow prompt.
+  private var awaitingAllow: Bool { usbPhones.contains { $0.state == .unauthorized } }
+  private var readySerial: String? { usbPhones.first { $0.state == .online }?.id }
 
   var body: some View {
     RouteLayout {
       BackButton { route = .home }
       ScreenTitle(title: "Connect with a USB cable", subtitle: "Turn on USB debugging once. After that, just plug in.")
       VStack(alignment: .leading, spacing: 12) {
-        StepRow(number: 1, text: "On your phone, open **Settings › About phone** and tap **Build number** 7 times.")
+        StepRow(number: 1, text: "Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first.")
         StepRow(number: 2, text: "Go back to **Settings › Developer options** and turn on **USB debugging**.")
         StepRow(number: 3, text: "Connect the phone to this Mac with a USB cable.")
         StepRow(number: 4, text: "Tap **Allow** when your phone asks.")
@@ -549,10 +557,30 @@ private struct USBScreen: View {
       .padding(14)
       .frame(maxWidth: .infinity, alignment: .leading)
       .glassPanel()
+      VStack(alignment: .leading, spacing: 8) {
+        Text("No prompt on your phone?").font(.callout.weight(.semibold))
+        TipRow(text: "Use a cable that carries data, not a charge-only one, and keep the phone unlocked.")
+        TipRow(text: "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**.")
+        TipRow(text: "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again.")
+      }
+      .padding(14)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .glassPanel()
     } footer: {
-      Label { Text("Waiting for a phone on USB…") } icon: { ProgressView().controlSize(.small) }
-        .font(.callout)
-        .foregroundStyle(.secondary)
+      Label {
+        if awaitingAllow { Text("Tap **Allow** when your phone asks.") } else { Text("Waiting for a phone on USB…") }
+      } icon: {
+        ProgressView().controlSize(.small)
+      }
+      .font(.callout)
+      .foregroundStyle(.secondary)
+    }
+    // Once allowed, carry on as pairing does: mirror it (when auto-mirroring
+    // is on) and go home, where the phone is listed with its Mirror button.
+    .task(id: readySerial) {
+      guard let serial = readySerial else { return }
+      _ = await SessionCoordinator.shared.phonePaired(serial: serial)
+      route = .home
     }
   }
 }
@@ -602,6 +630,20 @@ private struct StepRow: View {
         .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
       Text(text)
         .font(.callout)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+  }
+}
+
+private struct TipRow: View {
+  let text: LocalizedStringKey
+
+  var body: some View {
+    HStack(alignment: .firstTextBaseline, spacing: 8) {
+      Text(verbatim: "•").foregroundStyle(.secondary)
+      Text(text)
+        .font(.callout)
+        .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
     }
   }
