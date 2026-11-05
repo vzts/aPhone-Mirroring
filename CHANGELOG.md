@@ -2,6 +2,15 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.1.1] - 2026-11-06
+
+### Fixed
+- Phones that can only encode H.265 in software (and the Android
+  emulator) mirrored at a fraction of their screen, small and blurry.
+  They now switch to H.264 and mirror at full size.
+- After a phone reconnected, the first notification from an app without
+  a launcher icon could arrive a few seconds late.
+
 ## [v2.1.0] - 2026-11-06
 
 ### Added
