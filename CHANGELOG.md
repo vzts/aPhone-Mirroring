@@ -2,6 +2,13 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.2.2] - 2026-11-06
+
+### Fixed
+- The connect steps now say where Build number is on Samsung phones
+  (About phone › Software information) instead of an unclear "open
+  Software information first".
+
 ## [v2.2.1] - 2026-11-06
 
 ### Changed
