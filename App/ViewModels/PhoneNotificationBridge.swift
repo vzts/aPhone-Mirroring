@@ -26,7 +26,9 @@ final class PhoneNotificationBridge: NSObject, UNUserNotificationCenterDelegate 
   private var devices: [Device] = []
   /// Package → the app's name on the phone, kept across launches.
   private var labels = UserDefaults.standard.dictionary(forKey: labelsKey) as? [String: String] ?? [:]
-  /// One app-list read at a time per phone, and not again for a while.
+  /// One app-list read at a time per phone, and not again for a while —
+  /// across reconnects too, or every reconnect would re-read the list for
+  /// an app it doesn't name (one with no launcher icon).
   private var labelReads: [String: (task: Task<Void, Never>, at: Date)] = [:]
 
   var isEnabled: Bool { UserDefaults.standard.bool(forKey: Self.enabledKey) }
@@ -39,7 +41,6 @@ final class PhoneNotificationBridge: NSObject, UNUserNotificationCenterDelegate 
     for (serial, task) in watchers where !wanted.contains(serial) {
       task.cancel()
       watchers[serial] = nil
-      labelReads[serial] = nil
     }
     for device in devices where wanted.contains(device.id) && watchers[device.id] == nil {
       let serial = device.id
