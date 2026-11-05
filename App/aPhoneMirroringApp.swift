@@ -27,9 +27,7 @@ struct APhoneMirroringApp: App {
     .commands {
       CommandGroup(replacing: .newItem) {}
       CommandGroup(after: .appInfo) {
-        Button("Check for Updates…") {
-          NSWorkspace.shared.open(AppInfo.repository.appendingPathComponent("releases/latest"))
-        }
+        Button("Check for Updates…") { UpdateChecker.shared.checkNow() }
       }
       CommandGroup(before: .toolbar) {
         ViewCommands()
@@ -160,6 +158,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     #if DEBUG
     DebugScreens.showRequested(monitor: monitor)
     #endif
+
+    UpdateChecker.shared.appLaunched()
 
     deviceCancellable = monitor.$devices
       .removeDuplicates()

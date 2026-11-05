@@ -9,6 +9,7 @@ import SharedModels
 struct MenuBarContent: View {
   @EnvironmentObject var monitor: DeviceMonitor
   @Environment(\.openSettings) private var openSettings
+  @ObservedObject private var updates = UpdateChecker.shared
 
   private var online: [Device] { monitor.devices.filter { $0.state == .online } }
 
@@ -33,6 +34,12 @@ struct MenuBarContent: View {
       Divider().padding(.vertical, 8).padding(.horizontal, 14)
 
       VStack(spacing: 0) {
+        // A newer release the user hasn't skipped: offered here between checks.
+        if let pending = updates.pending {
+          MenuRow(title: "Update to \(pending.version?.description ?? pending.tag)…", symbol: "arrow.down.circle") {
+            UpdateChecker.shared.showPending()
+          }
+        }
         MenuRow(title: "Connect a Phone…", symbol: "plus.circle") {
           SessionCoordinator.shared.showConnectWindow()
         }

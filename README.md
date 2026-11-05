@@ -18,6 +18,8 @@
 
 Requires macOS 15 or later. Wireless needs Android 11 or later.
 
+On its second launch the app asks whether to check GitHub for a new version once a day; when one is out, it says what changed and opens the download. **Check for Updates…** checks any time, and **Settings › Advanced** turns the daily check off.
+
 ## Connect
 
 Developer options appear after tapping **Build number** seven times in **Settings › About phone** (on Samsung, **About phone › Software information**).
