@@ -247,32 +247,22 @@ final class SessionCoordinator: ObservableObject {
       try await launchWithFallbacks(for: device, displayId: displayId, into: c)
       startActiveDisplayPolling(for: device)
     } catch {
-      let isAudioError: Bool = {
-        if case DroidMirroringError.audioUnavailable = error { return true }
-        return false
-      }()
-      let isScrcpyError: Bool = {
-        if case DroidMirroringError.scrcpyProtocol = error { return true }
-        return false
-      }()
-
-      // If launch failed due to a bad display_id, clear the cache and retry with display 0.
-      // Skip this if we already retried above (audio / scrcpy error).
-      if !isAudioError && !isScrcpyError {
-        let errDesc = error.localizedDescription
-        if errDesc.contains("display") || errDesc.contains("short read") || errDesc.contains("scrcpy") {
-          log.error("launch failed for \(device.id): \(error). Retrying with displayId=0...")
-          activePanel.removeValue(forKey: device.id)
-          mirrorWindows.removeValue(forKey: device.id)?.close()
-          // Retry
-          do {
-            let controller = try makeMirrorWindow(for: device)
-            try await launchSession(for: device, displayId: 0, into: controller)
-            startActiveDisplayPolling(for: device)
-            return
-          } catch {
-            // Second failure — show detailed alert
-          }
+      // A display the phone doesn't have stops the server right after it
+      // connects; only the reason the launcher adds from the server's console
+      // ("Display 5 not found") tells it apart from other failures. Other
+      // displays (a foldable's cover) stay put: the main one may be off.
+      if displayId != 0, lastOnlineSerials.contains(device.id),
+         error.localizedDescription.range(of: #"Display \d+ not found"#, options: .regularExpression) != nil {
+        log.error("launch failed for \(device.id) on display \(displayId): \(error.localizedDescription, privacy: .public). Retrying with displayId=0...")
+        activePanel.removeValue(forKey: device.id)
+        mirrorWindows.removeValue(forKey: device.id)?.close()
+        do {
+          let controller = try makeMirrorWindow(for: device)
+          try await launchWithFallbacks(for: device, displayId: 0, into: controller)
+          startActiveDisplayPolling(for: device)
+          return
+        } catch {
+          // Second failure — show detailed alert
         }
       }
 
@@ -535,7 +525,8 @@ final class SessionCoordinator: ObservableObject {
     displayId: Int,
     into controller: MirrorWindowController,
     audioEnabled: Bool = true,
-    codecOverride: String? = nil
+    codecOverride: String? = nil,
+    encoder: String? = nil
   ) async throws {
     let resources = try ResourceLocator.scrcpyResources()
     let launcher = ScrcpyServerLauncher(adb: adb, serial: device.id, resources: resources)
@@ -558,6 +549,7 @@ final class SessionCoordinator: ObservableObject {
       videoBitRate: bitrateMbps * 1_000_000,
       maxFps: maxFps,
       videoCodec: codec,
+      videoEncoder: encoder,
       audioCodec: "opus",
       audioEnabled: audioEnabled && audioOutput == "mac",
       controlEnabled: true,
@@ -570,36 +562,40 @@ final class SessionCoordinator: ObservableObject {
 
   private static let keepAwakeScreenOffTimeoutMs = 30 * 60 * 1000
 
-  /// Codec a phone fell back to; kept until the codec setting changes so
+  /// Video a phone fell back to; kept until the codec setting changes so
   /// relaunches (rotation, settings) don't sit through the failing tries.
-  private var fallbackCodec: [String: String] = [:]
+  private var fallbackVideo: [String: (codec: String, encoder: String?)] = [:]
 
   /// Launch, stepping down until something works: without audio (phones with
-  /// no audio HAL), then H.264 (encoders that won't start). Used by every
-  /// launch path — first start, settings restart, display change.
+  /// no audio HAL), then H.264 (encoders that won't start), then — when the
+  /// phone says its encoder failed — its software H.264 encoder. Used by
+  /// every launch path — first start, settings restart, display change.
   private func launchWithFallbacks(for device: Device, displayId: Int, into controller: MirrorWindowController) async throws {
     let userCodec = UserDefaults.standard.string(forKey: "mirror.codec") ?? "h265"
-    var steps: [(audio: Bool, codec: String?)]
-    if let remembered = fallbackCodec[device.id] {
-      steps = [(true, remembered), (false, remembered)]
+    var steps: [(audio: Bool, codec: String?, encoder: String?)]
+    if let remembered = fallbackVideo[device.id] {
+      steps = [(true, remembered.codec, remembered.encoder), (false, remembered.codec, remembered.encoder)]
     } else {
-      steps = [(true, nil), (false, nil)]
-      if userCodec != "h264" { steps.append((false, "h264")) }
+      steps = [(true, nil, nil), (false, nil, nil)]
+      if userCodec != "h264" { steps.append((false, "h264", nil)) }
     }
     var lastError: Error?
-    for (index, step) in steps.enumerated() {
+    var index = 0
+    while index < steps.count {
+      let step = steps[index]
       if index > 0 { await controller.session.stop() }
       do {
         try await launchSession(for: device, displayId: displayId, into: controller,
-                                audioEnabled: step.audio, codecOverride: step.codec)
-        if let codec = step.codec, codec != userCodec, fallbackCodec[device.id] == nil {
-          fallbackCodec[device.id] = codec
-          log.notice("\(device.id) mirrors with \(codec) (fallback)")
+                                audioEnabled: step.audio, codecOverride: step.codec, encoder: step.encoder)
+        let codec = step.codec ?? userCodec
+        if codec != userCodec || step.encoder != nil, fallbackVideo[device.id] == nil {
+          fallbackVideo[device.id] = (codec, step.encoder)
+          log.notice("\(device.id) mirrors with \(codec) \(step.encoder ?? "") (fallback)")
         }
         return
       } catch {
         lastError = error
-        log.warning("launch step \(index) (audio=\(step.audio), codec=\(step.codec ?? userCodec)) failed for \(device.id): \(error.localizedDescription, privacy: .public)")
+        log.warning("launch step \(index) (audio=\(step.audio), codec=\(step.codec ?? userCodec), encoder=\(step.encoder ?? "default")) failed for \(device.id): \(error.localizedDescription, privacy: .public)")
         let retryable: Bool = {
           switch error as? DroidMirroringError {
           case .audioUnavailable, .scrcpyProtocol: return true
@@ -607,9 +603,22 @@ final class SessionCoordinator: ObservableObject {
           }
         }()
         if !retryable || !lastOnlineSerials.contains(device.id) { break }
+        // Last planned step, and the phone blamed its encoder (the reason
+        // the launcher adds from the server's console): its hardware encoder
+        // won't run, so try the software one — slower, but on every phone.
+        if index == steps.count - 1, step.encoder == nil,
+           error.localizedDescription.localizedCaseInsensitiveContains("encod") {
+          steps.append((false, "h264", Self.softwareH264Encoder(sdk: device.androidSDK)))
+        }
       }
+      index += 1
     }
     throw lastError ?? DroidMirroringError.scrcpyProtocol("launch failed")
+  }
+
+  /// Android's own H.264 encoder: Codec2 since Android 10, OMX before.
+  private static func softwareH264Encoder(sdk: Int) -> String {
+    sdk == 0 || sdk >= 29 ? "c2.android.avc.encoder" : "OMX.google.h264.encoder"
   }
 
   // MARK: on-screen keyboard
@@ -646,7 +655,7 @@ final class SessionCoordinator: ObservableObject {
 
   /// Settings › Codec changed: forget fallbacks and restart with the new one.
   func codecSettingChanged() {
-    fallbackCodec.removeAll()
+    fallbackVideo.removeAll()
     mirrorLaunchSettingsChanged()
   }
 

@@ -16,6 +16,7 @@ public struct ScrcpyOptions: Sendable {
   public var videoBitRate: Int        // bps
   public var maxFps: Int
   public var videoCodec: String       // "h264" | "h265" | "av1"
+  public var videoEncoder: String?    // nil = the phone's default for the codec
   public var audioCodec: String       // "aac" | "opus" | "raw"
   public var audioEnabled: Bool
   public var controlEnabled: Bool
@@ -30,6 +31,7 @@ public struct ScrcpyOptions: Sendable {
     videoBitRate: Int = 8_000_000,
     maxFps: Int = 60,
     videoCodec: String = "h265",
+    videoEncoder: String? = nil,
     audioCodec: String = "opus",
     audioEnabled: Bool = true,
     controlEnabled: Bool = true,
@@ -41,6 +43,7 @@ public struct ScrcpyOptions: Sendable {
     self.videoBitRate = videoBitRate
     self.maxFps = maxFps
     self.videoCodec = videoCodec
+    self.videoEncoder = videoEncoder
     self.audioCodec = audioCodec
     self.audioEnabled = audioEnabled
     self.controlEnabled = controlEnabled
@@ -65,6 +68,7 @@ public struct ScrcpyOptions: Sendable {
       "cleanup=true",
       "raw_stream=false",
     ]
+    if let encoder = videoEncoder { args.append("video_encoder=\(encoder)") }
     if maxSize > 0 { args.append("max_size=\(maxSize)") }
     if let nd = newDisplay { args.append("new_display=\(nd)") }
     if screenOffTimeoutMs >= 0 { args.append("screen_off_timeout=\(screenOffTimeoutMs)") }
@@ -114,6 +118,11 @@ public actor ScrcpyServerLauncher {
   private let sessionId: String
   private var acceptor: SocketAcceptor?
   private var shellConnection: ADBConnection?
+  /// The server's console. When a launch fails, the phone has only closed a
+  /// socket; what the server printed is the one place that says why.
+  private var serverLines: [String] = []
+  private var serverPartialLine = ""
+  private var serverEnded = false
   private var localAbstractName: String { "scrcpy_\(sessionId)" }
   private var remoteJarPath: String { "/data/local/tmp/scrcpy-server-\(sessionId).jar" }
 
@@ -150,38 +159,74 @@ public actor ScrcpyServerLauncher {
     drainShellOutput(conn)
 
     // 5. accept sockets in order: video → audio → control
-    let videoConn = try await acceptor.next()
-    let videoMeta = try await readVideoMetadata(videoConn)
+    do {
+      let videoConn = try await acceptor.next()
+      let videoMeta = try await readVideoMetadata(videoConn)
 
-    var audioConn: NWConnection?
-    if options.audioEnabled {
-      do {
-        audioConn = try await acceptor.next()
-      } catch {
-        // Audio socket failed (timeout / device has no audio HAL).
-        // Translate to a specific error so the caller can retry without audio.
-        log.warning("audio socket failed — device may lack audio support: \(error)")
-        throw DroidMirroringError.audioUnavailable(
-          "Audio socket did not connect within timeout. " +
-          "The device may lack an audio HAL (e.g. ZTE F50). " +
-          "Original error: \(error.localizedDescription)"
-        )
+      var audioConn: NWConnection?
+      if options.audioEnabled {
+        do {
+          audioConn = try await acceptor.next()
+        } catch {
+          // Audio socket failed (timeout / device has no audio HAL).
+          // Translate to a specific error so the caller can retry without audio.
+          log.warning("audio socket failed — device may lack audio support: \(error)")
+          throw DroidMirroringError.audioUnavailable(
+            "Audio socket did not connect within timeout. " +
+            "The device may lack an audio HAL (e.g. ZTE F50). " +
+            "Original error: \(error.localizedDescription)"
+          )
+        }
       }
-    }
 
-    var controlConn: NWConnection?
-    if options.controlEnabled {
-      controlConn = try await acceptor.next()
-    }
+      var controlConn: NWConnection?
+      if options.controlEnabled {
+        controlConn = try await acceptor.next()
+      }
 
-    return Sockets(
-      video: videoConn,
-      audio: audioConn,
-      control: controlConn,
-      deviceName: videoMeta.deviceName,
-      videoWidth: videoMeta.width,
-      videoHeight: videoMeta.height
-    )
+      return Sockets(
+        video: videoConn,
+        audio: audioConn,
+        control: controlConn,
+        deviceName: videoMeta.deviceName,
+        videoWidth: videoMeta.width,
+        videoHeight: videoMeta.height
+      )
+    } catch {
+      throw await withServerReason(error)
+    }
+  }
+
+  /// Adds the server's own reason to a failed launch, so the alert says what
+  /// went wrong on the phone rather than only "short read on video socket".
+  private func withServerReason(_ error: Error) async -> Error {
+    // The console comes over its own adb stream and can trail the socket
+    // that just closed; the server exiting ends it.
+    var waited = 0
+    while !serverEnded && waited < 30 {  // up to 1.5 s
+      try? await Task.sleep(nanoseconds: 50_000_000)
+      waited += 1
+    }
+    guard let reason = Self.serverError(in: serverLines) else { return error }
+    switch error as? DroidMirroringError {
+    case .scrcpyProtocol(let message): return DroidMirroringError.scrcpyProtocol("\(message) — phone: \(reason)")
+    case .audioUnavailable(let message): return DroidMirroringError.audioUnavailable("\(message) — phone: \(reason)")
+    default: return error
+    }
+  }
+
+  /// The first `ERROR:` line the server printed, with the exception under it
+  /// when there is one.
+  static func serverError(in lines: [String]) -> String? {
+    guard let index = lines.firstIndex(where: { $0.contains("ERROR: ") }),
+          let marker = lines[index].range(of: "ERROR: ") else { return nil }
+    var reason = lines[index][marker.upperBound...].trimmingCharacters(in: .whitespaces)
+    if reason == "null" { reason = "" }
+    if let next = lines.dropFirst(index + 1).first, !next.contains("ERROR: "),
+       !next.hasPrefix("\t"), next.contains("Exception") || next.contains("Error") {
+      reason = reason.isEmpty ? next : "\(reason) (\(next))"
+    }
+    return reason.isEmpty ? nil : String(reason.prefix(300))
   }
 
   public func stop() async {
@@ -228,16 +273,36 @@ public actor ScrcpyServerLauncher {
   }
 
   private func drainShellOutput(_ conn: ADBConnection) {
-    Task.detached {
+    Task.detached { [weak self] in
       while !Task.isCancelled {
         let chunk = (try? await conn.readAvailable(maxLength: 4096)) ?? Data()
         if chunk.isEmpty { break }
-        if let line = String(data: chunk, encoding: .utf8) {
-          // M5: forward to a structured logger
-          log.notice("scrcpy-server: \(line)")
-        }
+        await self?.recordServerOutput(chunk)
       }
+      await self?.markServerEnded()
     }
+  }
+
+  private func recordServerOutput(_ chunk: Data) {
+    var lines = (serverPartialLine + String(decoding: chunk, as: UTF8.self)).components(separatedBy: "\n")
+    serverPartialLine = lines.removeLast()
+    lines.forEach(recordServerLine)
+  }
+
+  private func markServerEnded() {
+    recordServerLine(serverPartialLine)
+    serverPartialLine = ""
+    serverEnded = true
+  }
+
+  private func recordServerLine(_ raw: String) {
+    let line = raw.trimmingCharacters(in: CharacterSet(charactersIn: "\r"))
+    guard !line.isEmpty else { return }
+    // Public: it's the server's own diagnostics, and a redacted line can't
+    // help anyone tell why a phone won't mirror.
+    log.notice("scrcpy-server: \(line, privacy: .public)")
+    serverLines.append(line)
+    if serverLines.count > 60 { serverLines.removeFirst() }
   }
 
   // MARK: video metadata

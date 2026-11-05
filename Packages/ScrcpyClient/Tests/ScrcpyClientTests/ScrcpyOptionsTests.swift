@@ -10,6 +10,13 @@ final class ScrcpyOptionsTests: XCTestCase {
     XCTAssertTrue(args.contains("control=true"))
     XCTAssertFalse(args.contains(where: { $0.hasPrefix("max_size=") }))
     XCTAssertFalse(args.contains(where: { $0.hasPrefix("new_display=") }))
+    XCTAssertFalse(args.contains(where: { $0.hasPrefix("video_encoder=") }))
+  }
+
+  func test_serverArgs_softwareEncoder() {
+    let args = ScrcpyOptions(videoCodec: "h264", videoEncoder: "c2.android.avc.encoder").serverArgs(scid: "abc12345")
+    XCTAssertTrue(args.contains("video_codec=h264"))
+    XCTAssertTrue(args.contains("video_encoder=c2.android.avc.encoder"))
   }
 
   func test_serverArgs_fusionFreeform() {
