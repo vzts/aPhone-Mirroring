@@ -28,9 +28,6 @@ final class FusionAppWindowController: NSWindowController, NSToolbarDelegate {
     let renderer = try MetalFrameRenderer()
     self.renderer = renderer
     self.eventView = MirrorEventView(layer: renderer.layer)
-    // Drags here move and resize freeform windows; a synthesized fling would
-    // throw them well past where they were dropped.
-    eventView.flingExtrapolation = false
     self.appLabel = appLabel
 
     let window = NSWindow(
