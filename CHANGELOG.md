@@ -2,6 +2,17 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.2.0] - 2026-11-06
+
+### Added
+- Update notices. On its second launch the app asks whether to check
+  GitHub for a new version once a day; when one is out, it says what
+  changed since your version and opens the download. Check for Updates…
+  checks any time, and Settings › Advanced › Updates turns the daily
+  check off. A scheduled check never pulls the app in front of what
+  you're doing: it waits until you're in the app, and the menu bar menu
+  offers the update meanwhile.
+
 ## [v2.1.1] - 2026-11-06
 
 ### Fixed
