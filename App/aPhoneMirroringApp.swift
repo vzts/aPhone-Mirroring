@@ -208,7 +208,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 }
 
 #if DEBUG
-/// `-DMDebugShow connect,settings,menubar` opens screens at launch so they can
+/// `-DMDebugShow connect,settings,menubar,update-now` opens screens at launch so they can
 /// be captured and checked without clicking through the app.
 @MainActor
 enum DebugScreens {
@@ -233,6 +233,10 @@ enum DebugScreens {
           SessionCoordinator.shared.openFiles(for: device)
         }
       }
+    }
+    if requested.contains("update-now") {
+      // Same path as Check for Updates….
+      DispatchQueue.main.asyncAfter(deadline: .now() + 2) { UpdateChecker.shared.checkNow() }
     }
     if requested.contains("settings-later") {
       // Same path as More › Mirroring Settings…, after launch has settled.
