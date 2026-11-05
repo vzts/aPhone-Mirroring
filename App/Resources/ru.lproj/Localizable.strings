@@ -157,7 +157,7 @@
 "Restart %@ to use the new language." = "Перезапустите %@, чтобы применить новый язык.";
 "Show Navigation Buttons" = "Показать кнопки навигации";
 "Hide Navigation Buttons" = "Скрыть кнопки навигации";
-"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "Один раз включите раздел **Для разработчиков**: в **Настройки › О телефоне** коснитесь **Номер сборки** 7 раз. На Samsung сначала откройте **Сведения о ПО**.";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, Build number is in **About phone › Software information**." = "Один раз включите раздел **Для разработчиков**: в **Настройки › О телефоне** коснитесь **Номер сборки** 7 раз. На Samsung номер сборки находится в **Сведения о телефоне › Сведения о ПО**.";
 "Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "Откройте **Настройки › Для разработчиков**, включите **Отладку по Wi-Fi** и коснитесь **Подключить устройство с помощью QR-кода**.";
 "Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "Отсканируйте этот код. Телефон и этот Mac должны быть в одной сети Wi-Fi.";
 "No prompt on your phone?" = "Запрос на телефоне не появляется?";

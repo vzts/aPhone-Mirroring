@@ -282,7 +282,7 @@ private struct HomeScreen: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityLabel(Text("Pairing QR code"))
       VStack(alignment: .leading, spacing: 10) {
-        StepRow(number: 1, text: "Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first.")
+        StepRow(number: 1, text: "Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, Build number is in **About phone › Software information**.")
         StepRow(number: 2, text: "Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**.")
         StepRow(number: 3, text: "Scan this code. Your phone and this Mac need to be on the same Wi-Fi.")
       }
@@ -549,7 +549,7 @@ private struct USBScreen: View {
       BackButton { route = .home }
       ScreenTitle(title: "Connect with a USB cable", subtitle: "Turn on USB debugging once. After that, just plug in.")
       VStack(alignment: .leading, spacing: 12) {
-        StepRow(number: 1, text: "Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first.")
+        StepRow(number: 1, text: "Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, Build number is in **About phone › Software information**.")
         StepRow(number: 2, text: "Go back to **Settings › Developer options** and turn on **USB debugging**.")
         StepRow(number: 3, text: "Connect the phone to this Mac with a USB cable.")
         StepRow(number: 4, text: "Tap **Allow** when your phone asks.")

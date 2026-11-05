@@ -157,7 +157,7 @@
 "Restart %@ to use the new language." = "重新启动 %@ 以使用新语言。";
 "Show Navigation Buttons" = "显示导航按钮";
 "Hide Navigation Buttons" = "隐藏导航按钮";
-"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "首次需打开**开发者选项**：在**设置 › 关于手机**中，连续点按**版本号** 7 次。三星手机需先打开**软件信息**。";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, Build number is in **About phone › Software information**." = "首次需打开**开发者选项**：在**设置 › 关于手机**中，连续点按**版本号** 7 次。三星手机的版本号在**关于手机 › 软件信息**里。";
 "Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "打开**设置 › 开发者选项**，开启**无线调试**，然后点按**使用二维码配对设备**。";
 "Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "扫描此代码。手机和这台 Mac 需要连接同一个 Wi-Fi。";
 "No prompt on your phone?" = "手机上没有出现提示？";

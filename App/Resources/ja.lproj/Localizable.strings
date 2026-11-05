@@ -157,7 +157,7 @@
 "Restart %@ to use the new language." = "新しい言語を使うには %@を再起動してください。";
 "Show Navigation Buttons" = "ナビゲーションボタンを表示";
 "Hide Navigation Buttons" = "ナビゲーションボタンを非表示";
-"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "**開発者向けオプション**を一度だけオンにします: **設定 › デバイス情報**で**ビルド番号**を 7 回タップします。Samsung では先に**ソフトウェア情報**を開きます。";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, Build number is in **About phone › Software information**." = "**開発者向けオプション**を一度だけオンにします。**設定 › デバイス情報**で**ビルド番号**を 7 回タップします。Samsung では、ビルド番号は**端末情報 › ソフトウェア情報**の中にあります。";
 "Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "**設定 › 開発者向けオプション**で**ワイヤレス デバッグ**をオンにし、**QR コードによるデバイスのペア設定**をタップします。";
 "Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "このコードをスキャンします。スマートフォンとこの Mac は同じ Wi-Fi に接続している必要があります。";
 "No prompt on your phone?" = "スマートフォンに確認が表示されませんか？";

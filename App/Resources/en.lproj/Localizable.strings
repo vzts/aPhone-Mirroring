@@ -157,7 +157,7 @@
 "Restart %@ to use the new language." = "Restart %@ to use the new language.";
 "Show Navigation Buttons" = "Show Navigation Buttons";
 "Hide Navigation Buttons" = "Hide Navigation Buttons";
-"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first.";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, Build number is in **About phone › Software information**." = "Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, Build number is in **About phone › Software information**.";
 "Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**.";
 "Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "Scan this code. Your phone and this Mac need to be on the same Wi-Fi.";
 "No prompt on your phone?" = "No prompt on your phone?";

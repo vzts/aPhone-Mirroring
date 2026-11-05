@@ -157,7 +157,7 @@
 "Restart %@ to use the new language." = "Starte %@ neu, um die neue Sprache zu verwenden.";
 "Show Navigation Buttons" = "Navigationstasten einblenden";
 "Hide Navigation Buttons" = "Navigationstasten ausblenden";
-"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, open **Software information** first." = "Aktiviere einmalig die **Entwickleroptionen**: Tippe unter **Einstellungen › Über das Telefon** 7-mal auf **Build-Nummer**. Bei Samsung öffnest du vorher **Softwareinformationen**.";
+"Turn on **Developer options** once: in **Settings › About phone**, tap **Build number** 7 times. On Samsung, Build number is in **About phone › Software information**." = "Aktiviere einmalig die **Entwickleroptionen**: Tippe unter **Einstellungen › Über das Telefon** 7-mal auf **Build-Nummer**. Bei Samsung steht die Build-Nummer unter **Telefoninfo › Softwareinformationen**.";
 "Open **Settings › Developer options**, turn on **Wireless debugging**, and tap **Pair device with QR code**." = "Öffne **Einstellungen › Entwickleroptionen**, aktiviere **Kabelloses Debugging** und tippe auf **Gerät über QR-Code koppeln**.";
 "Scan this code. Your phone and this Mac need to be on the same Wi-Fi." = "Scanne diesen Code. Telefon und Mac müssen im selben WLAN sein.";
 "No prompt on your phone?" = "Keine Abfrage auf dem Telefon?";
