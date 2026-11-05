@@ -2,6 +2,26 @@
 
 All notable changes to aPhone Mirroring (formerly DroidMirroring) will be documented in this file.
 
+## [v2.0.5] - 2026-11-06
+
+### Fixed
+- Dragging to scroll no longer throws the list to its end. Lists now
+  coast as far as the flick carries them, and stay put when you stop
+  before letting go, as with a finger.
+- When mirroring can't start, the alert now includes the phone's own
+  reason instead of only "short read on video socket".
+- Phones whose video encoder won't start fall back to Android's software
+  encoder, and a display the phone doesn't have falls back to its main
+  display.
+
+### Changed
+- The Connect window explains how to turn on Developer options
+  (including where Build number is on Samsung), Wireless debugging, and
+  USB debugging.
+- The USB screen says what to try when the phone never asks to allow
+  the Mac, prompts you to tap Allow while the phone is waiting, and
+  carries on once you do.
+
 ## [v2.0.4] - 2026-11-03
 
 ### Fixed
