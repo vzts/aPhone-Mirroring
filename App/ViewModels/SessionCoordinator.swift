@@ -569,8 +569,9 @@ final class SessionCoordinator: ObservableObject {
 
   /// Launch, stepping down until something works: without audio (phones with
   /// no audio HAL), then H.264 (encoders that won't start), then — when the
-  /// phone says its encoder failed — its software H.264 encoder. Used by
-  /// every launch path — first start, settings restart, display change.
+  /// phone says its encoder failed — its software H.264 encoder. H.265 that
+  /// only runs well under the screen's size gets one try at H.264 too. Used
+  /// by every launch path — first start, settings restart, display change.
   private func launchWithFallbacks(for device: Device, displayId: Int, into controller: MirrorWindowController) async throws {
     let userCodec = UserDefaults.standard.string(forKey: "mirror.codec") ?? "h265"
     var steps: [(audio: Bool, codec: String?, encoder: String?)]
@@ -581,6 +582,7 @@ final class SessionCoordinator: ObservableObject {
       if userCodec != "h264" { steps.append((false, "h264", nil)) }
     }
     var lastError: Error?
+    var sizeChecked = false
     var index = 0
     while index < steps.count {
       let step = steps[index]
@@ -589,6 +591,20 @@ final class SessionCoordinator: ObservableObject {
         try await launchSession(for: device, displayId: displayId, into: controller,
                                 audioEnabled: step.audio, codecOverride: step.codec, encoder: step.encoder)
         let codec = step.codec ?? userCodec
+        // H.265 well under the screen's size: the phone's H.265 encoder can't
+        // take it (a software one; the emulator's tops out at 512 px, giving
+        // 230x512 for 1080x2400), so scrcpy shrank the stream to fit. H.264
+        // next (with sound, then without), once; if that fails, the steps
+        // after it still stand.
+        if codec == "h265", step.encoder == nil, !sizeChecked, let shrunk = shrunkStream(device, controller) {
+          sizeChecked = true
+          log.notice("\(device.id) streams H.265 at \(shrunk, privacy: .public) — trying H.264")
+          let h264: [(audio: Bool, codec: String?, encoder: String?)] =
+            step.audio ? [(true, "h264", nil), (false, "h264", nil)] : [(false, "h264", nil)]
+          steps.insert(contentsOf: h264, at: index + 1)
+          index += 1
+          continue
+        }
         if codec != userCodec || step.encoder != nil, fallbackVideo[device.id] == nil {
           fallbackVideo[device.id] = (codec, step.encoder)
           log.notice("\(device.id) mirrors with \(codec) \(step.encoder ?? "") (fallback)")
@@ -617,6 +633,17 @@ final class SessionCoordinator: ObservableObject {
       index += 1
     }
     throw lastError ?? DroidMirroringError.scrcpyProtocol("launch failed")
+  }
+
+  /// "WxH on a WxH screen" when the stream's long side is under 75% of the
+  /// screen's. Nothing here caps the size, so that much smaller means the
+  /// encoder couldn't take it (scrcpy's own alignment trims a few pixels).
+  private func shrunkStream(_ device: Device, _ controller: MirrorWindowController) -> String? {
+    guard let panel = activePanel[device.id], panel.width > 0, panel.height > 0 else { return nil }
+    let stream = controller.session.dimensions
+    let streamLong = Int(max(stream.width, stream.height))
+    guard streamLong > 0, streamLong * 4 < max(panel.width, panel.height) * 3 else { return nil }
+    return "\(stream.width)x\(stream.height) on a \(panel.width)x\(panel.height) screen"
   }
 
   /// Android's own H.264 encoder: Codec2 since Android 10, OMX before.
