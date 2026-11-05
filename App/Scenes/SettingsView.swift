@@ -208,7 +208,6 @@ private struct MirrorSettings: View {
 // MARK: Advanced
 
 private struct AdvancedSettings: View {
-  @AppStorage(UpdateChecker.automaticKey) private var automaticUpdates = false
   @ObservedObject private var updates = UpdateChecker.shared
   @State private var cleaning = false
   @State private var result: (message: String, ok: Bool)?
@@ -257,24 +256,12 @@ private struct AdvancedSettings: View {
         Text("Troubleshooting")
       }
 
-      Section {
+      Section("Updates") {
         Toggle("Automatically check for updates", isOn: Binding(
-          get: { automaticUpdates },
-          set: { UpdateChecker.shared.setAutomaticChecks($0) }
+          get: { updates.notify },
+          set: { UpdateChecker.shared.setNotify($0) }
         ))
-        LabeledContent {
-          Button("Check Now") { UpdateChecker.shared.checkNow() }
-        } label: {
-          if let last = updates.lastCheck {
-            Text("Last checked \(last.formatted(.relative(presentation: .named)))")
-          } else {
-            Text("Never checked")
-          }
-        }
-      } header: {
-        Text("Updates")
-      } footer: {
-        Text("Once a day, from the project's GitHub releases. Only the app's version is sent.")
+        Button("Check Now") { UpdateChecker.shared.checkNow() }
       }
 
       Section("About") {

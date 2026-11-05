@@ -5,28 +5,25 @@ import os
 
 private let log = Logger(subsystem: "io.github.vzts.aphonemirroring", category: "updates")
 
-/// Tells the user when a newer release is on GitHub, the way Sparkle-based
-/// Mac apps do:
-/// - automatic checks are asked for on the second launch, not assumed, and
-///   can be turned off in Settings › Advanced;
-/// - they run once a day — at launch when a day has passed, and while the
-///   app stays open;
-/// - a scheduled check never takes focus: its alert waits until the user is
-///   in the app, and the menu bar menu offers the update meanwhile;
-/// - Remind Me Later brings it back at the next daily check, Skip This
-///   Version for good; Check for Updates… always answers.
+/// Tells the user when a newer release is out, and stays quiet otherwise.
+///
+/// The check runs on its own — shortly after launch when a day has passed,
+/// and daily while the app stays open — and shows nothing unless there's a
+/// new version. Then a window says what changed, with a "Don't tell me about
+/// new versions" box to stop these notices (Settings › Advanced › Automatically
+/// check for updates turns them back on). A
+/// check never takes focus: its window waits until the user is in the app,
+/// and the menu bar menu offers the update meanwhile. Check for Updates…
+/// always answers, including "You're up to date!".
 ///
 /// There's no update server: GitHub's releases API gives each release's
-/// version and notes (60 requests an hour without a token), and the
-/// releases/latest page, which redirects to the newest tag, stands in when
-/// the API can't be reached. Nothing is installed for the user: Download
-/// opens the DMG (the app isn't notarized, so a silent install couldn't open).
+/// version and notes, and when it can't be reached the releases/latest page,
+/// which redirects to the newest tag, still gives the version. Nothing is
+/// installed for the user: Download opens the DMG.
 @MainActor
 final class UpdateChecker: ObservableObject {
   static let shared = UpdateChecker()
-  /// Bool; absent until the user has been asked.
-  static let automaticKey = "updates.automaticChecks"
-  private static let launchesKey = "updates.launches"
+  static let notifyKey = "updates.notify"
   private static let lastCheckKey = "updates.lastCheck"
   private static let skippedKey = "updates.skippedVersion"
   private static let interval: TimeInterval = 24 * 60 * 60
@@ -40,18 +37,15 @@ final class UpdateChecker: ObservableObject {
     case failed
   }
 
-  /// What the Software Update window shows.
-  enum Panel { case permission, result }
-
   @Published private(set) var state: State = .idle
-  @Published private(set) var panel: Panel = .result
   /// A newer release the user hasn't skipped; the menu bar menu offers it.
   @Published private(set) var pending: AppRelease?
-  @Published private(set) var lastCheck = UserDefaults.standard.object(forKey: lastCheckKey) as? Date
+  /// On unless the user turned update notices off.
+  @Published private(set) var notify = UserDefaults.standard.object(forKey: notifyKey) as? Bool ?? true
 
   private var window: NSWindow?
   private var dailyTimer: Timer?
-  /// A scheduled check found an update while the user was in another app.
+  /// A check found an update while the user was in another app.
   private var alertWhenActive = false
 
   /// This build's version.
@@ -64,10 +58,6 @@ final class UpdateChecker: ObservableObject {
     return short.flatMap(AppVersion.init) ?? AppVersion("0")!
   }()
 
-  var automaticChecks: Bool? {
-    UserDefaults.standard.object(forKey: Self.automaticKey) as? Bool
-  }
-
   private init() {
     NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
       MainActor.assumeIsolated {
@@ -78,37 +68,26 @@ final class UpdateChecker: ObservableObject {
     }
   }
 
-  // MARK: launch and schedule
+  // MARK: schedule
 
   func appLaunched() {
-    let launches = UserDefaults.standard.integer(forKey: Self.launchesKey) + 1
-    UserDefaults.standard.set(launches, forKey: Self.launchesKey)
-    guard automaticChecks != nil else {
-      // The first launch is for trying the app; ask on the next one.
-      if launches >= 2 {
-        Task {
-          try? await Task.sleep(for: .seconds(3))
-          guard self.automaticChecks == nil else { return }
-          self.panel = .permission
-          self.showWindow(activate: false)
-        }
-      }
-      return
-    }
+    // 2.2.0 asked first; that answer and its launch count no longer apply.
+    for key in ["updates.automaticChecks", "updates.launches"] { UserDefaults.standard.removeObject(forKey: key) }
     schedule()
   }
 
-  /// The setting changed (the prompt or Settings › Advanced).
-  func setAutomaticChecks(_ on: Bool) {
-    UserDefaults.standard.set(on, forKey: Self.automaticKey)
-    log.notice("automatic update checks \(on ? "on" : "off", privacy: .public)")
+  /// From the update window's "don't tell me" box or Settings.
+  func setNotify(_ on: Bool) {
+    notify = on
+    UserDefaults.standard.set(on, forKey: Self.notifyKey)
+    log.notice("update notices \(on ? "on" : "off", privacy: .public)")
     schedule()
   }
 
   private func schedule() {
     dailyTimer?.invalidate()
     dailyTimer = nil
-    guard automaticChecks == true else { return }
+    guard notify else { return }
     Task {
       // Phones connect and mirror first; this can wait a moment.
       try? await Task.sleep(for: .seconds(3))
@@ -121,12 +100,12 @@ final class UpdateChecker: ObservableObject {
   }
 
   private func scheduledCheck() async {
-    guard automaticChecks == true else { return }
-    if let lastCheck, Date().timeIntervalSince(lastCheck) < Self.interval { return }
+    guard notify else { return }
+    let last = UserDefaults.standard.object(forKey: Self.lastCheckKey) as? Date
+    if let last, Date().timeIntervalSince(last) < Self.interval { return }
     await check()
     guard let pending else { return }
-    log.notice("scheduled check found \(pending.tag, privacy: .public)")
-    panel = .result
+    log.notice("found \(pending.tag, privacy: .public)")
     // Never take focus from another app: wait until the user is in this one.
     if NSApp.isActive { showWindow(activate: false) } else { alertWhenActive = true }
   }
@@ -135,15 +114,9 @@ final class UpdateChecker: ObservableObject {
 
   /// Check for Updates…: always checks, always answers.
   func checkNow() {
-    panel = .result
     state = .checking
     showWindow(activate: true)
     Task { await check(ignoringSkipped: true) }
-  }
-
-  func allowAutomaticChecks(_ allow: Bool) {
-    setAutomaticChecks(allow)
-    closeWindow()
   }
 
   func download() {
@@ -166,7 +139,6 @@ final class UpdateChecker: ObservableObject {
   /// The menu bar menu's "Update to …" item.
   func showPending() {
     guard let pending else { return }
-    panel = .result
     state = .available(availableReleases ?? [pending])
     showWindow(activate: true)
   }
@@ -195,18 +167,16 @@ final class UpdateChecker: ObservableObject {
     } else {
       state = .failed
     }
-    if case .failed = state {} else {
-      lastCheck = Date()
-      UserDefaults.standard.set(lastCheck, forKey: Self.lastCheckKey)
-    }
     switch state {
     case .available(let releases):
+      UserDefaults.standard.set(Date(), forKey: Self.lastCheckKey)
       availableReleases = releases
       let skipped = UserDefaults.standard.string(forKey: Self.skippedKey)
       let newest = releases.first
       pending = ignoringSkipped || newest?.version?.description != skipped ? newest : nil
       log.notice("update available: \(newest?.tag ?? "", privacy: .public) (\(releases.count) newer than \(self.current.description, privacy: .public))")
     case .upToDate:
+      UserDefaults.standard.set(Date(), forKey: Self.lastCheckKey)
       availableReleases = nil
       pending = nil
       log.notice("up to date at \(self.current.description, privacy: .public)")
@@ -237,11 +207,11 @@ final class UpdateChecker: ObservableObject {
 
   // MARK: window
 
-  /// `activate`: only for what the user asked for. Scheduled alerts and the
-  /// permission prompt appear without pulling the app in front.
+  /// `activate` only for what the user asked for; a scheduled notice appears
+  /// without pulling the app in front.
   private func showWindow(activate: Bool) {
     if window == nil {
-      log.notice("showing the Software Update window (\(self.panel == .permission ? "permission" : "result", privacy: .public))")
+      log.notice("showing the Software Update window")
       let hosting = NSHostingController(rootView: UpdateView(checker: self))
       let window = NSWindow(contentViewController: hosting)
       window.title = String(localized: "Software Update")

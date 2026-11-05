@@ -170,10 +170,6 @@
 "New notifications from a connected phone appear in Notification Center, and clicking one opens its app on the phone. They stay on this Mac." = "Новые уведомления с подключенного телефона появляются в Центре уведомлений, а щелчок по уведомлению открывает его приложение на телефоне. Они остаются на этом Mac.";
 "Allow notifications for %@ in System Settings." = "Разрешите уведомления для %@ в Системных настройках.";
 "Open Notification Settings…" = "Открыть настройки уведомлений…";
-"Check for updates automatically?" = "Проверять обновления автоматически?";
-"Should %@ look for a new version on GitHub once a day? You can also check any time from the app menu." = "Проверять новую версию %@ на GitHub раз в день? Проверить можно и в любой момент из меню приложения.";
-"Don't Check" = "Не проверять";
-"Check Automatically" = "Проверять автоматически";
 "Checking for updates…" = "Проверка обновлений…";
 "You're up to date!" = "У вас последняя версия!";
 "%@ %@ is currently the newest version available." = "%@ %@ — самая новая версия.";
@@ -183,14 +179,11 @@
 "%@ is now available — you have %@." = "Доступна версия %@ — у вас %@.";
 "What's new" = "Что нового";
 "See the release notes on GitHub." = "Примечания к выпуску — на GitHub.";
-"The download opens in your browser. Drag the new version to Applications to replace this one." = "Загрузка откроется в браузере. Перетащите новую версию в «Программы», чтобы заменить эту.";
 "Skip This Version" = "Пропустить эту версию";
 "Remind Me Later" = "Напомнить позже";
 "Software Update" = "Обновление ПО";
 "Updates" = "Обновления";
-"Automatically check for updates" = "Автоматически проверять обновления";
 "Check Now" = "Проверить сейчас";
-"Last checked %@" = "Последняя проверка: %@";
-"Never checked" = "Ещё не проверялось";
-"Once a day, from the project's GitHub releases. Only the app's version is sent." = "Раз в день по выпускам проекта на GitHub. Отправляется только версия приложения.";
 "Update to %@…" = "Обновить до %@…";
+"Automatically check for updates" = "Автоматически проверять обновления";
+"Don't tell me about new versions" = "Больше не сообщать о новых версиях";

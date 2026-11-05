@@ -1,7 +1,7 @@
 import SharedModels
 import SwiftUI
 
-/// Software Update: asking to check automatically, and what a check found.
+/// Software Update: what a check found.
 struct UpdateView: View {
   @ObservedObject var checker: UpdateChecker
 
@@ -11,31 +11,12 @@ struct UpdateView: View {
         .resizable()
         .frame(width: 64, height: 64)
       VStack(alignment: .leading, spacing: 12) {
-        switch checker.panel {
-        case .permission: permission
-        case .result: result
-        }
+        result
       }
     }
     .padding(20)
     .frame(width: 500)
   }
-
-  // MARK: asking
-
-  @ViewBuilder
-  private var permission: some View {
-    Text("Check for updates automatically?").font(.headline)
-    Text("Should \(AppInfo.name) look for a new version on GitHub once a day? You can also check any time from the app menu.")
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
-    buttons {
-      Button("Don't Check") { checker.allowAutomaticChecks(false) }
-      Button("Check Automatically") { checker.allowAutomaticChecks(true) }.keyboardShortcut(.defaultAction)
-    }
-  }
-
-  // MARK: result
 
   @ViewBuilder
   private var result: some View {
@@ -99,10 +80,13 @@ struct UpdateView: View {
     }
     .frame(height: 200)
     .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-    Text("The download opens in your browser. Drag the new version to Applications to replace this one.")
-      .font(.caption)
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
+    // macOS's "don't show this again" box: off by default, checked to stop
+    // these notices (Settings › Advanced turns them back on).
+    Toggle("Don't tell me about new versions", isOn: Binding(
+      get: { !checker.notify },
+      set: { checker.setNotify(!$0) }
+    ))
+    .toggleStyle(.checkbox)
     HStack {
       Button("Skip This Version") { checker.skipThisVersion() }
       Spacer()

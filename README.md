@@ -18,7 +18,7 @@
 
 Requires macOS 15 or later. Wireless needs Android 11 or later.
 
-On its second launch the app asks whether to check GitHub for a new version once a day; when one is out, it says what changed and opens the download. **Check for Updates…** checks any time, and **Settings › Advanced** turns the daily check off.
+When a new version is out, the app says what changed and opens the download; tick **Don't tell me about new versions** to stop that. **Check for Updates…** checks any time.
 
 ## Connect
 

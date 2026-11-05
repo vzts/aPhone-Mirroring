@@ -170,10 +170,6 @@
 "New notifications from a connected phone appear in Notification Center, and clicking one opens its app on the phone. They stay on this Mac." = "已連接手機的新通知會顯示在通知中心，點按通知會在手機上打開對應的 App。通知只會留在這部 Mac 上。";
 "Allow notifications for %@ in System Settings." = "請在「系統設定」中允許 %@ 傳送通知。";
 "Open Notification Settings…" = "打開「通知」設定…";
-"Check for updates automatically?" = "要自動檢查更新嗎？";
-"Should %@ look for a new version on GitHub once a day? You can also check any time from the app menu." = "要讓 %@ 每天在 GitHub 上檢查一次新版本嗎？你也可以隨時從 App 選單中檢查。";
-"Don't Check" = "不檢查";
-"Check Automatically" = "自動檢查";
 "Checking for updates…" = "正在檢查更新…";
 "You're up to date!" = "已是最新版本！";
 "%@ %@ is currently the newest version available." = "%@ %@ 是目前可用的最新版本。";
@@ -183,14 +179,11 @@
 "%@ is now available — you have %@." = "現已推出 %@，你的版本是 %@。";
 "What's new" = "更新內容";
 "See the release notes on GitHub." = "請在 GitHub 上查看發布說明。";
-"The download opens in your browser. Drag the new version to Applications to replace this one." = "下載會在瀏覽器中打開。將新版本拖到「應用程式」中以取代目前版本。";
 "Skip This Version" = "略過這個版本";
 "Remind Me Later" = "稍後提醒我";
 "Software Update" = "軟體更新";
 "Updates" = "更新";
-"Automatically check for updates" = "自動檢查更新";
 "Check Now" = "立即檢查";
-"Last checked %@" = "上次檢查：%@";
-"Never checked" = "從未檢查";
-"Once a day, from the project's GitHub releases. Only the app's version is sent." = "每天一次，從專案的 GitHub 發布頁面檢查。只會傳送 App 的版本號。";
 "Update to %@…" = "更新到 %@…";
+"Automatically check for updates" = "自動檢查更新";
+"Don't tell me about new versions" = "不再提示新版本";

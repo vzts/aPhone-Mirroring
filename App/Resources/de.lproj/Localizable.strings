@@ -170,10 +170,6 @@
 "New notifications from a connected phone appear in Notification Center, and clicking one opens its app on the phone. They stay on this Mac." = "Neue Mitteilungen eines verbundenen Telefons erscheinen in der Mitteilungszentrale; ein Klick öffnet die App auf dem Telefon. Sie bleiben auf diesem Mac.";
 "Allow notifications for %@ in System Settings." = "Erlaube Mitteilungen für %@ in den Systemeinstellungen.";
 "Open Notification Settings…" = "Mitteilungseinstellungen öffnen …";
-"Check for updates automatically?" = "Automatisch nach Updates suchen?";
-"Should %@ look for a new version on GitHub once a day? You can also check any time from the app menu." = "Soll %@ einmal täglich auf GitHub nach einer neuen Version suchen? Du kannst auch jederzeit über das App-Menü suchen.";
-"Don't Check" = "Nicht suchen";
-"Check Automatically" = "Automatisch suchen";
 "Checking for updates…" = "Suche nach Updates …";
 "You're up to date!" = "Du bist auf dem neuesten Stand!";
 "%@ %@ is currently the newest version available." = "%@ %@ ist die aktuell neueste Version.";
@@ -183,14 +179,11 @@
 "%@ is now available — you have %@." = "%@ ist jetzt verfügbar – du hast %@.";
 "What's new" = "Neuerungen";
 "See the release notes on GitHub." = "Versionshinweise auf GitHub ansehen.";
-"The download opens in your browser. Drag the new version to Applications to replace this one." = "Der Download öffnet sich im Browser. Ziehe die neue Version in „Programme“, um diese zu ersetzen.";
 "Skip This Version" = "Diese Version überspringen";
 "Remind Me Later" = "Später erinnern";
 "Software Update" = "Softwareupdate";
 "Updates" = "Updates";
-"Automatically check for updates" = "Automatisch nach Updates suchen";
 "Check Now" = "Jetzt suchen";
-"Last checked %@" = "Zuletzt gesucht: %@";
-"Never checked" = "Noch nie gesucht";
-"Once a day, from the project's GitHub releases. Only the app's version is sent." = "Einmal täglich anhand der GitHub-Releases des Projekts. Gesendet wird nur die Version der App.";
 "Update to %@…" = "Auf %@ aktualisieren …";
+"Automatically check for updates" = "Automatisch nach Updates suchen";
+"Don't tell me about new versions" = "Nicht mehr über neue Versionen informieren";
