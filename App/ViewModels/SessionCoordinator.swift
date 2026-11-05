@@ -606,9 +606,11 @@ final class SessionCoordinator: ObservableObject {
         // Last planned step, and the phone blamed its encoder (the reason
         // the launcher adds from the server's console): its hardware encoder
         // won't run, so try the software one — slower, but on every phone.
+        // Sound first: the encoder, not audio, is what failed.
         if index == steps.count - 1, step.encoder == nil,
            error.localizedDescription.localizedCaseInsensitiveContains("encod") {
-          steps.append((false, "h264", Self.softwareH264Encoder(sdk: device.androidSDK)))
+          let software = Self.softwareH264Encoder(sdk: device.androidSDK)
+          steps += [(true, "h264", software), (false, "h264", software)]
         }
       }
       index += 1
