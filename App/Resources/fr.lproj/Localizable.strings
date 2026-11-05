@@ -164,3 +164,4 @@
 "Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "Utilisez un câble de données, pas un câble de charge seule, et gardez le téléphone déverrouillé.";
 "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "Sur Samsung, désactivez **Auto Blocker** dans **Paramètres › Sécurité et confidentialité**.";
 "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "Dans **Options pour les développeurs**, touchez **Révoquer les autorisations de débogage USB**, puis rebranchez le câble.";
+"Still nothing? Restart the phone, then turn USB debugging off and on again." = "Toujours rien ? Redémarrez le téléphone, puis désactivez et réactivez le débogage USB.";

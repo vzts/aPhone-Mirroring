@@ -164,3 +164,4 @@
 "Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "Use a cable that carries data, not a charge-only one, and keep the phone unlocked.";
 "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**.";
 "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again.";
+"Still nothing? Restart the phone, then turn USB debugging off and on again." = "Still nothing? Restart the phone, then turn USB debugging off and on again.";

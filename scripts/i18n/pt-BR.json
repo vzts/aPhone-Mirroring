@@ -164,5 +164,6 @@
 "O aviso não aparece no telefone?",
 "Use um cabo de dados, não um só de carregamento, e mantenha o telefone desbloqueado.",
 "No Samsung, desative o **Bloqueador automático** em **Configurações › Segurança e privacidade**.",
-"Em **Opções do desenvolvedor**, toque em **Revogar autorizações de depuração USB** e conecte o cabo de novo."
+"Em **Opções do desenvolvedor**, toque em **Revogar autorizações de depuração USB** e conecte o cabo de novo.",
+"Ainda nada? Reinicie o telefone e depois desative e ative de novo a depuração USB."
 ]

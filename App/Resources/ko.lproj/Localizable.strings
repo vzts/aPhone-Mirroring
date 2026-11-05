@@ -164,3 +164,4 @@
 "Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "충전 전용이 아닌 데이터 전송용 케이블을 쓰고, 휴대폰 잠금을 풀어 둡니다.";
 "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "삼성은 **설정 › 보안 및 개인정보 보호**에서 **자동 차단**을 끕니다.";
 "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "**개발자 옵션**에서 **USB 디버깅 권한 승인 취소**를 탭한 뒤 케이블을 다시 꽂습니다.";
+"Still nothing? Restart the phone, then turn USB debugging off and on again." = "그래도 안 뜨면 휴대폰을 재시작한 뒤 USB 디버깅을 껐다가 다시 켭니다.";

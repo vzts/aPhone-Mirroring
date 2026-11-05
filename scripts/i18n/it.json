@@ -164,5 +164,6 @@
 "Nessuna richiesta sul telefono?",
 "Usa un cavo dati, non uno solo di ricarica, e tieni il telefono sbloccato.",
 "Su Samsung, disattiva **Auto Blocker** in **Impostazioni › Sicurezza e privacy**.",
-"In **Opzioni sviluppatore**, tocca **Revoca autorizzazioni debug USB**, poi ricollega il cavo."
+"In **Opzioni sviluppatore**, tocca **Revoca autorizzazioni debug USB**, poi ricollega il cavo.",
+"Ancora niente? Riavvia il telefono, poi disattiva e riattiva il debug USB."
 ]

@@ -562,6 +562,7 @@ private struct USBScreen: View {
         TipRow(text: "Use a cable that carries data, not a charge-only one, and keep the phone unlocked.")
         TipRow(text: "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**.")
         TipRow(text: "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again.")
+        TipRow(text: "Still nothing? Restart the phone, then turn USB debugging off and on again.")
       }
       .padding(14)
       .frame(maxWidth: .infinity, alignment: .leading)

@@ -23,7 +23,7 @@ Requires macOS 15 or later. Wireless needs Android 11 or later.
 Developer options appear after tapping **Build number** seven times in **Settings › About phone** (on Samsung, **About phone › Software information**).
 
 - **Wi-Fi:** on the phone, open **Settings › Developer options**, turn on **Wireless debugging**, tap **Pair device with QR code**, and scan the code in the app. The phone and the Mac need to be on the same Wi-Fi.
-- **USB:** turn on **USB debugging** in Developer options, plug the phone in, and tap **Allow**. If the phone never asks, use a data cable rather than a charge-only one, turn off **Auto Blocker** on Samsung (**Settings › Security and privacy**), or tap **Revoke USB debugging authorizations** in Developer options and plug in again.
+- **USB:** turn on **USB debugging** in Developer options, plug the phone in, and tap **Allow**. If the phone never asks, use a data cable rather than a charge-only one, turn off **Auto Blocker** on Samsung (**Settings › Security and privacy**), tap **Revoke USB debugging authorizations** in Developer options and plug in again, or restart the phone and turn USB debugging off and on.
 
 If mirroring won't start, the alert includes the phone's own reason; please add it to a bug report.
 

@@ -164,3 +164,4 @@
 "Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "充電専用ではなくデータ通信に対応したケーブルを使い、スマートフォンのロックを解除しておきます。";
 "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "Samsung では**設定 › セキュリティとプライバシー**で**自動ブロッカー**をオフにします。";
 "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "**開発者向けオプション**で**USB デバッグの承認を取り消す**をタップしてから、ケーブルを接続し直します。";
+"Still nothing? Restart the phone, then turn USB debugging off and on again." = "それでも表示されない場合は、スマートフォンを再起動してから USB デバッグをオフにして、もう一度オンにします。";

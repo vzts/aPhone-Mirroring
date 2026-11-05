@@ -164,3 +164,4 @@
 "Use a cable that carries data, not a charge-only one, and keep the phone unlocked." = "請使用支援資料傳輸的線材（而非僅限充電的線），並保持手機解鎖。";
 "On Samsung, turn off **Auto Blocker** in **Settings › Security and privacy**." = "三星手機請在**設定 › 安全性與隱私權**中關閉**Auto Blocker**。";
 "In **Developer options**, tap **Revoke USB debugging authorizations**, then plug in again." = "在**開發人員選項**中點按**撤銷 USB 偵錯授權**，然後重新插上傳輸線。";
+"Still nothing? Restart the phone, then turn USB debugging off and on again." = "仍然沒有？請重新啟動手機，然後關閉再重新開啟 USB 偵錯。";
